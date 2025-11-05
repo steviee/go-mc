@@ -13,9 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Workflows for linting, testing, security scanning, and releases
 - Makefile for local development
 - golang-pro sub-agent for Go development tasks
+- Cobra CLI framework with root command and version command (#1)
+- Global flags: --config, --json, --quiet, --verbose with mutual exclusivity
+- Structured logging with slog (log level adapts to flags)
+- Command group structure: servers, users, whitelist, mods, system, config
+- Comprehensive test suite with 83.7% coverage
+- Viper configuration management with ~/.config/go-mc/config.yaml support
 
 ### Changed
-- None
+- Replaced placeholder main.go with complete CLI implementation
+- Fixed Makefile install-hooks target syntax error
 
 ### Fixed
 - None

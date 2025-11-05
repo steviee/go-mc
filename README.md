@@ -1490,12 +1490,12 @@ go-mc/
 - [x] Configure GitHub workflows (lint, test, security, release)
 
 ### Phase 1: Core CLI & State Management
-- [ ] Set up Cobra CLI framework
+- [x] Set up Cobra CLI framework
 - [ ] Implement YAML state management
-- [ ] Create config loading/validation
+- [x] Create config loading/validation
 - [ ] Implement PID-based locking
-- [ ] Add structured logging
-- [ ] `version` and `config` commands
+- [x] Add structured logging
+- [x] `version` and `config` commands (placeholders)
 
 ### Phase 2: Podman Integration
 - [ ] Initialize Podman client

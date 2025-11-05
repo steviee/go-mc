@@ -88,29 +88,7 @@ install: build
 ## install-hooks: Install pre-commit hooks
 install-hooks:
 	@echo "Installing pre-commit hooks..."
-	@cat > .git/hooks/pre-commit << 'EOF'
-#!/bin/bash
-set -e
-
-echo "Running pre-commit checks..."
-
-# Format check
-if [ -n "$$(gofmt -l .)" ]; then
-	echo "❌ Code not formatted. Running gofmt..."
-	gofmt -w -s .
-	git add .
-fi
-
-# Vet
-echo "Running go vet..."
-go vet ./...
-
-# Lint
-echo "Running golangci-lint..."
-golangci-lint run --timeout=5m
-
-echo "✅ Pre-commit checks passed"
-EOF
+	@printf '#!/bin/bash\nset -e\n\necho "Running pre-commit checks..."\n\n# Format check\nif [ -n "$$(gofmt -l .)" ]; then\n\techo "❌ Code not formatted. Running gofmt..."\n\tgofmt -w -s .\n\tgit add .\nfi\n\n# Vet\necho "Running go vet..."\ngo vet ./...\n\n# Lint\necho "Running golangci-lint..."\ngolangci-lint run --timeout=5m\n\necho "✅ Pre-commit checks passed"\n' > .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 	@echo "✅ Pre-commit hook installed"
 
