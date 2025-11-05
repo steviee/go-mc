@@ -20,8 +20,9 @@ type FileLock struct {
 // This uses syscall.Flock() with LOCK_EX, which provides
 // advisory locking (processes must cooperate by using locks).
 func LockFile(path string) (*FileLock, error) {
-	// Open file for read/write, create if doesn't exist
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+	// Open file for read/write, create if doesn't exist with secure permissions (0600)
+	//nolint:gosec // G304: File path is controlled by application, not user input
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for locking: %w", err)
 	}
@@ -42,8 +43,9 @@ func LockFile(path string) (*FileLock, error) {
 // Unlike LockFile, it returns immediately if the lock cannot be acquired.
 // Returns nil, ErrLockHeld if the lock is already held by another process.
 func TryLockFile(path string) (*FileLock, error) {
-	// Open file for read/write, create if doesn't exist
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+	// Open file for read/write, create if doesn't exist with secure permissions (0600)
+	//nolint:gosec // G304: File path is controlled by application, not user input
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for locking: %w", err)
 	}

@@ -159,9 +159,9 @@ func InitDirs() error {
 	}
 	dirs = append(dirs, archivesDir)
 
-	// Create all directories
+	// Create all directories with secure permissions (0750)
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -171,7 +171,7 @@ func InitDirs() error {
 
 // EnsureDir ensures that a directory exists, creating it if necessary.
 func EnsureDir(path string) error {
-	if err := os.MkdirAll(path, 0755); err != nil {
+	if err := os.MkdirAll(path, 0750); err != nil {
 		return fmt.Errorf("failed to ensure directory %s: %w", path, err)
 	}
 	return nil
