@@ -535,6 +535,16 @@ make test-race
 
 ## 🔀 Git Workflow
 
+### CRITICAL RULE: Always Use Feature Branches
+
+**NEVER work directly on `main` branch. ALWAYS create a feature branch for every issue.**
+
+**Workflow for every issue:**
+1. **Create feature branch** before starting work
+2. **Push regularly** to backup work and show progress
+3. **Create PR** when implementation is complete
+4. **Merge to main** after review and CI passes
+
 ### Branch Naming
 
 **Format:** `<type>/<issue-number>-<short-description>`
@@ -553,6 +563,14 @@ feature/42-modrinth-integration
 fix/123-yaml-corruption-on-crash
 refactor/45-service-layer-cleanup
 docs/67-update-readme-quickstart
+```
+
+**Creating a feature branch:**
+```bash
+# Starting work on issue #42
+git checkout main
+git pull
+git checkout -b feature/42-modrinth-integration
 ```
 
 ### Commit Messages
@@ -628,39 +646,64 @@ make install-hooks
 
 **If hook fails, commit is blocked until fixed.**
 
-### Issue Completion Workflow
+### Complete Issue Workflow
 
-**CRITICAL RULE: When an issue is completed, ALWAYS push and create a PR immediately.**
+**MANDATORY workflow for every issue:**
 
-**Required steps after completing an issue:**
-
-1. **Commit your changes** following conventional commit format
-2. **Push to remote** with appropriate branch name
-3. **Create Pull Request** with complete description
-4. **Update issue** to reference the PR
-
-**Example workflow:**
 ```bash
-# After completing issue #42
-git add .
-git commit -m "feat(mods): implement Modrinth integration (#42)"
+# 1. CREATE FEATURE BRANCH (before any work)
+git checkout main
+git pull
+git checkout -b feature/42-modrinth-integration
+
+# 2. IMPLEMENT with regular commits
+git add <files>
+git commit -m "feat(mods): add Modrinth API client"
+
+# 3. PUSH REGULARLY (backup work, show progress)
 git push -u origin feature/42-modrinth-integration
-gh pr create --title "feat(mods): implement Modrinth integration" --body "..."
+
+# Continue working...
+git commit -m "feat(mods): implement dependency resolution"
+git push  # Push after each significant commit
+
+# 4. CREATE PR when implementation complete
+gh pr create --title "feat(mods): implement Modrinth integration" \
+  --body "$(cat <<'EOF'
+## Summary
+- Implemented Modrinth API client
+- Added dependency resolution
+- Comprehensive test coverage
+
+## Testing
+- [x] Unit tests pass
+- [x] Integration tests pass
+- [x] Linting passes
+
+Closes #42
+EOF
+)"
 ```
 
+**Push frequency:**
+- After completing each significant feature/component
+- At least once per coding session
+- Minimum: when tests pass
+- Always before creating PR
+
 **Why this matters:**
-- Ensures work is backed up immediately
-- Allows for code review and feedback
-- Tracks progress transparently
-- Prevents work from being lost
-- Enables CI/CD pipelines to run
+- Work is backed up continuously
+- Progress is visible to team
+- CI/CD runs on every push
+- Code review can start early
+- No work is lost if something fails
 
-**DO NOT:**
-- Leave completed work uncommitted
-- Complete multiple issues before creating PRs
-- Wait for "batch" pushes
-
-**AI Assistants:** After marking an issue as complete, you MUST push changes and create a PR before moving to the next issue.
+**CRITICAL - AI Assistants:**
+- ✅ ALWAYS create feature branch FIRST
+- ✅ ALWAYS push regularly (not just at the end)
+- ✅ ALWAYS create PR when complete
+- ❌ NEVER work directly on main
+- ❌ NEVER wait to push until "everything is done"
 
 ---
 
@@ -1017,4 +1060,4 @@ Added new task to roadmap:
 ---
 
 **Remember: Quality over speed. Write code you'd be proud to maintain in 5 years.**
-
+- ALWAYS develop issues in their respective feature-branches and push to Github when regularly and create a Pull Request when about done.
