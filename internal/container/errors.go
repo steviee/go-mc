@@ -21,6 +21,18 @@ var (
 
 	// ErrNoRuntimeAvailable is returned when no container runtime is available.
 	ErrNoRuntimeAvailable = errors.New("no container runtime available")
+
+	// ErrContainerNotFound is returned when a container cannot be found.
+	ErrContainerNotFound = errors.New("container not found")
+
+	// ErrContainerAlreadyExists is returned when trying to create a container with an existing name.
+	ErrContainerAlreadyExists = errors.New("container already exists")
+
+	// ErrInvalidMemoryFormat is returned when memory format is invalid.
+	ErrInvalidMemoryFormat = errors.New("invalid memory format")
+
+	// ErrInvalidCondition is returned when wait condition is invalid.
+	ErrInvalidCondition = errors.New("invalid wait condition")
 )
 
 // RuntimeError wraps errors with runtime context.
