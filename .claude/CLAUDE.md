@@ -1061,5 +1061,5 @@ Added new task to roadmap:
 
 **Remember: Quality over speed. Write code you'd be proud to maintain in 5 years.**
 - ALWAYS develop issues in their respective feature-branches and push to Github when regularly and create a Pull Request when about done.
-- ALWAYS run make fmt and make lint locally before committing#
+- ALWAYS run make fmt and make lint locally before committing
 - ALWAYS wait a minute after PR creation and check for job errors and Github Copilot Code-Reviews and address the problems mentioned.
