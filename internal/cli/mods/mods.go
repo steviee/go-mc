@@ -37,8 +37,9 @@ on the server's Minecraft and Fabric versions.`,
 		Aliases: []string{"mod"},
 	}
 
-	// Subcommands will be added in future phases
-	// cmd.AddCommand(NewSearchCommand())
+	// Add subcommands
+	cmd.AddCommand(NewSearchCommand())
+	// Future subcommands:
 	// cmd.AddCommand(NewInstallCommand())
 	// cmd.AddCommand(NewListCommand())
 	// cmd.AddCommand(NewUpdateCommand())

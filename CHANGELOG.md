@@ -122,6 +122,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive HTTP mocking tests
   - 88.9% test coverage
   - 2,100+ lines of implementation and tests
+- Mods search command for Modrinth integration (#10)
+  - Command: `go-mc mods search <query>` with Fabric mod filtering
+  - Flags: --version (MC version filter), --limit (max results), --sort (relevance/downloads/updated)
+  - Table output with aligned columns (SLUG, NAME, DOWNLOADS, DESCRIPTION)
+  - JSON output with structured mod data
+  - Client-side sorting by downloads and update date
+  - Human-readable download counts (K/M formatting)
+  - Text truncation for long descriptions
+  - Empty results handling with helpful messages
+  - Integration with Modrinth API client
+  - 95.7% test coverage
+  - 910+ lines of implementation and tests
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
