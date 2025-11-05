@@ -35,9 +35,9 @@ You can also view server status, logs, and configuration.`,
 
 	// Add subcommands
 	cmd.AddCommand(NewCreateCommand())
+	cmd.AddCommand(NewListCommand())
 
 	// Future subcommands
-	// cmd.AddCommand(NewListCommand())
 	// cmd.AddCommand(NewStartCommand())
 	// cmd.AddCommand(NewStopCommand())
 	// cmd.AddCommand(NewRestartCommand())
