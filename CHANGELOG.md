@@ -30,6 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic recovery from corrupted YAML files
   - Path traversal prevention and input validation
   - 80.5% test coverage for state package
+- PID-based locking system to prevent concurrent execution (#3)
+  - PID file at ~/.config/go-mc/go-mc.pid
+  - Automatic stale PID cleanup for crashed processes
+  - Signal handling (SIGINT/SIGTERM) for graceful shutdown
+  - File-based locking with syscall.Flock()
+  - Process existence validation
+  - Clear error messages for concurrent execution attempts
 
 ### Changed
 - Replaced placeholder main.go with complete CLI implementation
