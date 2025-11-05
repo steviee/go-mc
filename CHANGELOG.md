@@ -37,8 +37,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - File-based locking with syscall.Flock()
   - Process existence validation
   - Clear error messages for concurrent execution attempts
+- Podman/Docker client integration with auto-detection (#4)
+  - Automatic runtime detection (Podman rootless → rootful → Docker)
+  - Socket auto-discovery for Podman and Docker
+  - User-friendly error messages with installation instructions
+  - Context-aware timeouts for all operations
+  - Connection health checks (Ping, Info)
+  - Mock client for testing
+  - Custom error types with runtime-specific guidance
+  - 65.8% test coverage for container package
 
 ### Changed
+- Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
 - Replaced placeholder main.go with complete CLI implementation
 - Fixed Makefile install-hooks target syntax error
 
