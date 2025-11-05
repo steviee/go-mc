@@ -78,6 +78,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper cleanup on errors (container, ports, state rollback)
   - 53.4% unit test coverage + full integration test coverage
   - 1,280+ lines of implementation and tests
+- Servers list command with table and JSON output (#7)
+  - Command: `go-mc servers list` with aliases `ls`
+  - Flags: --all, --filter, --sort, --no-header
+  - Table output with aligned columns (NAME, STATUS, VERSION, PORT, MEMORY, UPTIME)
+  - JSON output with structured server data
+  - Filtering by status (running, stopped, created, all)
+  - Sorting by name, status, port, memory, or uptime
+  - Human-readable uptime formatting (5m, 2h 30m, 3d 4h)
+  - Memory display with allocation limits
+  - Graceful handling of missing containers
+  - Default shows only running servers (like docker ps)
+  - --all flag shows all servers (like docker ps -a)
+  - Empty list handling with helpful messages
+  - Container state normalization for consistent UX
+  - 58.0% unit test coverage
+  - 1,027+ lines of implementation and tests
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
