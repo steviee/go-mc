@@ -628,6 +628,40 @@ make install-hooks
 
 **If hook fails, commit is blocked until fixed.**
 
+### Issue Completion Workflow
+
+**CRITICAL RULE: When an issue is completed, ALWAYS push and create a PR immediately.**
+
+**Required steps after completing an issue:**
+
+1. **Commit your changes** following conventional commit format
+2. **Push to remote** with appropriate branch name
+3. **Create Pull Request** with complete description
+4. **Update issue** to reference the PR
+
+**Example workflow:**
+```bash
+# After completing issue #42
+git add .
+git commit -m "feat(mods): implement Modrinth integration (#42)"
+git push -u origin feature/42-modrinth-integration
+gh pr create --title "feat(mods): implement Modrinth integration" --body "..."
+```
+
+**Why this matters:**
+- Ensures work is backed up immediately
+- Allows for code review and feedback
+- Tracks progress transparently
+- Prevents work from being lost
+- Enables CI/CD pipelines to run
+
+**DO NOT:**
+- Leave completed work uncommitted
+- Complete multiple issues before creating PRs
+- Wait for "batch" pushes
+
+**AI Assistants:** After marking an issue as complete, you MUST push changes and create a PR before moving to the next issue.
+
 ---
 
 ## 🔍 Pull Request Process
