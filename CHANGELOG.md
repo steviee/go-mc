@@ -109,6 +109,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Container runtime integration via existing client
   - 56.6% unit test coverage
   - 1,900+ lines of implementation and tests
+- Modrinth API client with version matching (#9)
+  - Search API for Fabric mod discovery
+  - Project details API with metadata
+  - Version filtering by Minecraft and Fabric loader versions
+  - Automatic compatible version matching
+  - Recursive dependency resolution with cycle detection
+  - Token bucket rate limiter (300 req/min)
+  - Rate limit header parsing and updates
+  - Context-aware HTTP client with timeouts
+  - Custom error types with status codes
+  - Comprehensive HTTP mocking tests
+  - 88.9% test coverage
+  - 2,100+ lines of implementation and tests
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
