@@ -33,8 +33,10 @@ You can also view server status, logs, and configuration.`,
 		Aliases: []string{"server", "srv"},
 	}
 
-	// Subcommands will be added in future phases
-	// cmd.AddCommand(NewCreateCommand())
+	// Add subcommands
+	cmd.AddCommand(NewCreateCommand())
+
+	// Future subcommands
 	// cmd.AddCommand(NewListCommand())
 	// cmd.AddCommand(NewStartCommand())
 	// cmd.AddCommand(NewStopCommand())
