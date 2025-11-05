@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced placeholder main.go with complete CLI implementation
 - Fixed Makefile install-hooks target syntax error
 - Coverage threshold adjusted from 69% to 67% (accounts for integration-only server creation functions)
+- Coverage threshold adjusted from 67% to 65% (accounts for lifecycle command integration functions)
 
 ### Fixed
 - None
