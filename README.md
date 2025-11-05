@@ -686,10 +686,9 @@ Search Modrinth for Fabric mods.
 
 **Flags:**
 ```
---version <version>    Filter by Minecraft version (default: latest)
---limit <n>            Max results (default: 20)
---sort                 Sort by: relevance, downloads, updated, newest
---format               Output format: table, json
+--version, -v <version>    Filter by Minecraft version
+--limit, -l <n>            Max results (default: 20, max: 100)
+--sort <field>             Sort by: relevance, downloads, updated (default: relevance)
 ```
 
 **Examples:**
@@ -697,44 +696,50 @@ Search Modrinth for Fabric mods.
 # Search for performance mods
 go-mc mods search sodium
 
-# Search for 1.20.4 compatible mods
-go-mc mods search shaders --version 1.20.4
+# Search for 1.21.1 compatible mods
+go-mc mods search shaders --version 1.21.1 --limit 10
 
-# JSON output for scripting
-go-mc mods search optimization --format json --limit 50
+# Sort by downloads
+go-mc mods search optimization --sort downloads --limit 50
+
+# JSON output for scripting (using global --json flag)
+go-mc mods search fabric-api --json
 ```
 
 **Output (table):**
 ```
-SLUG          NAME          DOWNLOADS   UPDATED      DESCRIPTION
-sodium        Sodium        50M         2024-12-15   Modern rendering engine
-lithium       Lithium       30M         2024-12-10   Optimize game physics
-iris          Iris Shaders  25M         2024-12-20   Shader mod for Fabric
+SLUG                 NAME                      DOWNLOADS  DESCRIPTION
+----------------------------------------------------------------------------------------------------
+sodium               Sodium                    86.1M      The fastest and most compatible rende...
+lithium              Lithium                   46.9M      No-compromises game logic/server opti...
+iris                 Iris Shaders              24.3M      A modern shaders mod for Minecraft in...
+
+Found 3 result(s).
 ```
 
 **Output (JSON):**
 ```json
 {
-  "results": [
-    {
-      "slug": "sodium",
-      "name": "Sodium",
-      "description": "Modern rendering engine and optimization mod",
-      "modrinth_id": "AANobbMI",
-      "downloads": 50000000,
-      "updated_at": "2024-12-15T10:30:00Z",
-      "versions": [
-        {
-          "version": "0.5.5",
-          "minecraft_version": "1.20.4",
-          "fabric_version": "0.15.0+",
-          "file": "sodium-fabric-mc1.20.4-0.5.5.jar",
-          "download_url": "https://cdn.modrinth.com/...",
-          "dependencies": ["fabric-api"]
-        }
-      ]
-    }
-  ]
+  "status": "success",
+  "data": {
+    "results": [
+      {
+        "slug": "sodium",
+        "title": "Sodium",
+        "description": "The fastest and most compatible rendering optimization mod for Minecraft",
+        "project_id": "AANobbMI",
+        "project_type": "mod",
+        "downloads": 86123456,
+        "icon_url": "https://cdn.modrinth.com/data/AANobbMI/icon.png",
+        "author": "JellySquid",
+        "categories": ["optimization", "fabric"]
+      }
+    ],
+    "count": 1,
+    "total": 156,
+    "limit": 20,
+    "offset": 0
+  }
 }
 ```
 
@@ -1506,12 +1511,12 @@ go-mc/
 - [ ] Port allocation strategy
 
 ### Phase 3: Server Lifecycle Commands
-- [ ] `servers create` command
-- [ ] `servers start/stop/restart` commands
+- [x] `servers create` command
+- [x] `servers start/stop/restart` commands
 - [ ] `servers rm` command
-- [ ] `servers list` (ps) command
-- [ ] Server state persistence in YAML
-- [ ] Legacy command aliases
+- [x] `servers list` (ps) command
+- [x] Server state persistence in YAML
+- [x] Legacy command aliases
 
 ### Phase 4: Logs & Inspect
 - [ ] `servers logs` with streaming and filtering
@@ -1525,9 +1530,9 @@ go-mc/
 - [ ] Graceful shutdown via RCON
 
 ### Phase 6: Modrinth Integration
-- [ ] Modrinth API client
-- [ ] `mods search` command
-- [ ] Version matching (MC + Fabric)
+- [x] Modrinth API client
+- [x] `mods search` command
+- [x] Version matching (MC + Fabric)
 - [ ] `mods install` with dependency resolution
 - [ ] `mods list/update/remove` commands
 
