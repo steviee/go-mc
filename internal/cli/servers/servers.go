@@ -36,11 +36,11 @@ You can also view server status, logs, and configuration.`,
 	// Add subcommands
 	cmd.AddCommand(NewCreateCommand())
 	cmd.AddCommand(NewListCommand())
+	cmd.AddCommand(NewStartCommand())
+	cmd.AddCommand(NewStopCommand())
+	cmd.AddCommand(NewRestartCommand())
 
 	// Future subcommands
-	// cmd.AddCommand(NewStartCommand())
-	// cmd.AddCommand(NewStopCommand())
-	// cmd.AddCommand(NewRestartCommand())
 	// cmd.AddCommand(NewStatusCommand())
 	// cmd.AddCommand(NewLogsCommand())
 	// cmd.AddCommand(NewRemoveCommand())
