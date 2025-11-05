@@ -3,19 +3,23 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/steviee/go-mc/internal/cli"
 )
 
 // Version information (set by ldflags during build)
 var (
-	Version   = "dev"
-	Commit    = "unknown"
-	BuildTime = "unknown"
+	Version = "dev"
+	Commit  = "unknown"
+	Date    = "unknown"
+	BuiltBy = "unknown"
 )
 
 func main() {
-	fmt.Printf("go-mc version %s (commit: %s, built: %s)\n", Version, Commit, BuildTime)
-	fmt.Println()
-	fmt.Println("This is a placeholder. The CLI will be implemented in Phase 1.")
-	fmt.Println("See https://github.com/steviee/go-mc for development progress.")
-	os.Exit(0)
+	rootCmd := cli.NewRootCommand(Version, Commit, Date, BuiltBy)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }
