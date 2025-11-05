@@ -1,0 +1,388 @@
+package state
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+// GlobalState represents the global state for go-mc.
+// It tracks allocated ports, active servers, and garbage collection info.
+type GlobalState struct {
+	AllocatedPorts []int     `yaml:"allocated_ports"`
+	Servers        []string  `yaml:"servers"`
+	LastGCRun      time.Time `yaml:"last_gc_run"`
+}
+
+// NewGlobalState returns a new GlobalState with empty values.
+func NewGlobalState() *GlobalState {
+	return &GlobalState{
+		AllocatedPorts: []int{},
+		Servers:        []string{},
+		LastGCRun:      time.Time{},
+	}
+}
+
+// LoadGlobalState loads the global state from the state file.
+// If the file doesn't exist, it creates a new one with empty state.
+// If the file is corrupted, it backs up the corrupted file and creates a fresh one.
+func LoadGlobalState(ctx context.Context) (*GlobalState, error) {
+	statePath, err := GetStatePath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Check if state file exists
+	if _, err := os.Stat(statePath); os.IsNotExist(err) {
+		// Create new state
+		state := NewGlobalState()
+		if err := SaveGlobalState(ctx, state); err != nil {
+			return nil, fmt.Errorf("failed to save initial state: %w", err)
+		}
+		return state, nil
+	}
+
+	// Read state file
+	data, err := os.ReadFile(statePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read state file: %w", err)
+	}
+
+	// Parse YAML
+	var state GlobalState
+	if err := yaml.Unmarshal(data, &state); err != nil {
+		// State file is corrupted, backup and create fresh
+		backupPath := statePath + ".corrupted"
+		if backupErr := os.Rename(statePath, backupPath); backupErr != nil {
+			return nil, fmt.Errorf("state file is corrupted and failed to create backup: %w (original error: %v)", backupErr, err)
+		}
+
+		// Create fresh state
+		state := NewGlobalState()
+		if saveErr := SaveGlobalState(ctx, state); saveErr != nil {
+			return nil, fmt.Errorf("state file was corrupted (backed up to %s), failed to save fresh state: %w (original error: %v)", backupPath, saveErr, err)
+		}
+
+		return state, nil
+	}
+
+	return &state, nil
+}
+
+// SaveGlobalState saves the global state to the state file using atomic writes.
+func SaveGlobalState(ctx context.Context, state *GlobalState) error {
+	if state == nil {
+		return fmt.Errorf("state cannot be nil")
+	}
+
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Marshal to YAML
+	data, err := yaml.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("failed to marshal state: %w", err)
+	}
+
+	// Atomic write
+	if err := AtomicWrite(statePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write state: %w", err)
+	}
+
+	return nil
+}
+
+// AllocatePort allocates a new port and updates the global state.
+// It uses file locking to ensure thread-safety.
+func AllocatePort(ctx context.Context, port int) error {
+	if err := ValidatePort(port); err != nil {
+		return err
+	}
+
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Acquire lock
+	lock, err := LockFile(statePath + ".lock")
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	// Load state
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Check if port is already allocated
+	for _, p := range state.AllocatedPorts {
+		if p == port {
+			return fmt.Errorf("port %d is already allocated", port)
+		}
+	}
+
+	// Allocate port
+	state.AllocatedPorts = append(state.AllocatedPorts, port)
+
+	// Save state
+	if err := SaveGlobalState(ctx, state); err != nil {
+		return fmt.Errorf("failed to save state: %w", err)
+	}
+
+	return nil
+}
+
+// ReleasePort releases a port and updates the global state.
+// It uses file locking to ensure thread-safety.
+func ReleasePort(ctx context.Context, port int) error {
+	if err := ValidatePort(port); err != nil {
+		return err
+	}
+
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Acquire lock
+	lock, err := LockFile(statePath + ".lock")
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	// Load state
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Find and remove port
+	found := false
+	newPorts := make([]int, 0, len(state.AllocatedPorts))
+	for _, p := range state.AllocatedPorts {
+		if p != port {
+			newPorts = append(newPorts, p)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("port %d is not allocated", port)
+	}
+
+	state.AllocatedPorts = newPorts
+
+	// Save state
+	if err := SaveGlobalState(ctx, state); err != nil {
+		return fmt.Errorf("failed to save state: %w", err)
+	}
+
+	return nil
+}
+
+// IsPortAllocated checks if a port is already allocated.
+func IsPortAllocated(ctx context.Context, port int) (bool, error) {
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to load state: %w", err)
+	}
+
+	for _, p := range state.AllocatedPorts {
+		if p == port {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// GetNextAvailablePort returns the next available port starting from startPort.
+func GetNextAvailablePort(ctx context.Context, startPort int) (int, error) {
+	if err := ValidatePort(startPort); err != nil {
+		return 0, err
+	}
+
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Build set of allocated ports for quick lookup
+	allocatedSet := make(map[int]bool)
+	for _, p := range state.AllocatedPorts {
+		allocatedSet[p] = true
+	}
+
+	// Find next available port
+	for port := startPort; port <= 65535; port++ {
+		if !allocatedSet[port] {
+			return port, nil
+		}
+	}
+
+	return 0, fmt.Errorf("no available ports starting from %d", startPort)
+}
+
+// RegisterServer registers a server in the global state.
+// It uses file locking to ensure thread-safety.
+func RegisterServer(ctx context.Context, name string) error {
+	if err := ValidateServerName(name); err != nil {
+		return err
+	}
+
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Acquire lock
+	lock, err := LockFile(statePath + ".lock")
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	// Load state
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Check if server is already registered
+	for _, s := range state.Servers {
+		if s == name {
+			return fmt.Errorf("server %q is already registered", name)
+		}
+	}
+
+	// Register server
+	state.Servers = append(state.Servers, name)
+
+	// Save state
+	if err := SaveGlobalState(ctx, state); err != nil {
+		return fmt.Errorf("failed to save state: %w", err)
+	}
+
+	return nil
+}
+
+// UnregisterServer unregisters a server from the global state.
+// It uses file locking to ensure thread-safety.
+func UnregisterServer(ctx context.Context, name string) error {
+	if err := ValidateServerName(name); err != nil {
+		return err
+	}
+
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Acquire lock
+	lock, err := LockFile(statePath + ".lock")
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	// Load state
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Find and remove server
+	found := false
+	newServers := make([]string, 0, len(state.Servers))
+	for _, s := range state.Servers {
+		if s != name {
+			newServers = append(newServers, s)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("server %q is not registered", name)
+	}
+
+	state.Servers = newServers
+
+	// Save state
+	if err := SaveGlobalState(ctx, state); err != nil {
+		return fmt.Errorf("failed to save state: %w", err)
+	}
+
+	return nil
+}
+
+// IsServerRegistered checks if a server is registered.
+func IsServerRegistered(ctx context.Context, name string) (bool, error) {
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to load state: %w", err)
+	}
+
+	for _, s := range state.Servers {
+		if s == name {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// ListServers returns a list of all registered servers.
+func ListServers(ctx context.Context) ([]string, error) {
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Return a copy to prevent modification
+	servers := make([]string, len(state.Servers))
+	copy(servers, state.Servers)
+
+	return servers, nil
+}
+
+// UpdateGCTimestamp updates the last garbage collection timestamp.
+func UpdateGCTimestamp(ctx context.Context) error {
+	statePath, err := GetStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get state path: %w", err)
+	}
+
+	// Acquire lock
+	lock, err := LockFile(statePath + ".lock")
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	// Load state
+	state, err := LoadGlobalState(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load state: %w", err)
+	}
+
+	// Update timestamp
+	state.LastGCRun = time.Now()
+
+	// Save state
+	if err := SaveGlobalState(ctx, state); err != nil {
+		return fmt.Errorf("failed to save state: %w", err)
+	}
+
+	return nil
+}

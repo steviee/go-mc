@@ -17,8 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global flags: --config, --json, --quiet, --verbose with mutual exclusivity
 - Structured logging with slog (log level adapts to flags)
 - Command group structure: servers, users, whitelist, mods, system, config
-- Comprehensive test suite with 83.7% coverage
+- Comprehensive test suite with 80.9% coverage
 - Viper configuration management with ~/.config/go-mc/config.yaml support
+- YAML-based state management system (#2)
+  - Config management with defaults and validation
+  - Global state tracking (port allocation, server registry)
+  - Per-server state persistence with full lifecycle tracking
+  - Whitelist state management
+  - Atomic file writes (temp file + rename pattern)
+  - File locking with syscall.Flock() for concurrent safety
+  - XDG Base Directory specification compliance
+  - Automatic recovery from corrupted YAML files
+  - Path traversal prevention and input validation
+  - 80.5% test coverage for state package
 
 ### Changed
 - Replaced placeholder main.go with complete CLI implementation

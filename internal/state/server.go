@@ -1,0 +1,467 @@
+package state
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+// ServerStatus represents the current status of a server.
+type ServerStatus string
+
+const (
+	StatusStopped ServerStatus = "stopped"
+	StatusRunning ServerStatus = "running"
+	StatusPaused  ServerStatus = "paused"
+	StatusError   ServerStatus = "error"
+)
+
+// ServerState represents the state of a Minecraft server.
+type ServerState struct {
+	Name        string       `yaml:"name"`
+	ID          string       `yaml:"id"`
+	Status      ServerStatus `yaml:"status"`
+	ContainerID string       `yaml:"container_id"`
+	Image       string       `yaml:"image"`
+
+	Minecraft MinecraftConfig `yaml:"minecraft"`
+	Volumes   VolumesConfig   `yaml:"volumes"`
+	Whitelist WhitelistConfig `yaml:"whitelist"`
+	Mods      []ModInfo       `yaml:"mods"`
+	Ops       []OpInfo        `yaml:"ops"`
+
+	CreatedAt   time.Time `yaml:"created_at"`
+	UpdatedAt   time.Time `yaml:"updated_at"`
+	LastStarted time.Time `yaml:"last_started,omitempty"`
+	LastStopped time.Time `yaml:"last_stopped,omitempty"`
+}
+
+// MinecraftConfig holds Minecraft-specific configuration.
+type MinecraftConfig struct {
+	Version             string `yaml:"version"`
+	FabricLoaderVersion string `yaml:"fabric_loader_version"`
+	JavaVersion         int    `yaml:"java_version"`
+	Memory              string `yaml:"memory"`
+	GamePort            int    `yaml:"game_port"`
+	RconPort            int    `yaml:"rcon_port"`
+	RconPassword        string `yaml:"rcon_password"`
+}
+
+// VolumesConfig holds volume mount configuration.
+type VolumesConfig struct {
+	Data    string `yaml:"data"`
+	Backups string `yaml:"backups"`
+}
+
+// WhitelistConfig holds whitelist configuration.
+type WhitelistConfig struct {
+	Enabled       bool     `yaml:"enabled"`
+	Lists         []string `yaml:"lists"`
+	EnforceOnJoin bool     `yaml:"enforce_on_join"`
+}
+
+// ModInfo represents information about an installed mod.
+type ModInfo struct {
+	Name         string   `yaml:"name"`
+	Slug         string   `yaml:"slug"`
+	Version      string   `yaml:"version"`
+	ProjectID    string   `yaml:"project_id"`
+	VersionID    string   `yaml:"version_id"`
+	URL          string   `yaml:"url"`
+	Filename     string   `yaml:"filename"`
+	SHA512       string   `yaml:"sha512"`
+	SizeBytes    int64    `yaml:"size_bytes"`
+	Dependencies []string `yaml:"dependencies"`
+}
+
+// OpInfo represents an operator.
+type OpInfo struct {
+	UUID                string `yaml:"uuid"`
+	Name                string `yaml:"name"`
+	Level               int    `yaml:"level"`
+	BypassesPlayerLimit bool   `yaml:"bypassesPlayerLimit"`
+}
+
+// NewServerState creates a new ServerState with default values.
+func NewServerState(name string) *ServerState {
+	now := time.Now()
+	return &ServerState{
+		Name:      name,
+		Status:    StatusStopped,
+		Mods:      []ModInfo{},
+		Ops:       []OpInfo{},
+		CreatedAt: now,
+		UpdatedAt: now,
+		Whitelist: WhitelistConfig{
+			Lists: []string{},
+		},
+	}
+}
+
+// LoadServerState loads a server's state from its YAML file.
+// If the file doesn't exist, it returns an error.
+// If the file is corrupted, it backs up the corrupted file and returns an error.
+func LoadServerState(ctx context.Context, name string) (*ServerState, error) {
+	if err := ValidateServerName(name); err != nil {
+		return nil, err
+	}
+
+	serverPath, err := GetServerPath(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get server path: %w", err)
+	}
+
+	// Check if server file exists
+	if _, err := os.Stat(serverPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("server %q does not exist", name)
+	}
+
+	// Read server file
+	data, err := os.ReadFile(serverPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read server file: %w", err)
+	}
+
+	// Parse YAML
+	var state ServerState
+	if err := yaml.Unmarshal(data, &state); err != nil {
+		// Server file is corrupted, backup
+		backupPath := serverPath + ".corrupted"
+		if backupErr := os.Rename(serverPath, backupPath); backupErr != nil {
+			return nil, fmt.Errorf("server file is corrupted and failed to create backup: %w (original error: %v)", backupErr, err)
+		}
+
+		return nil, fmt.Errorf("server file was corrupted and backed up to %s: %w", backupPath, err)
+	}
+
+	// Validate server state
+	if err := ValidateServerState(&state); err != nil {
+		return nil, fmt.Errorf("invalid server state: %w", err)
+	}
+
+	return &state, nil
+}
+
+// SaveServerState saves a server's state to its YAML file using atomic writes.
+func SaveServerState(ctx context.Context, state *ServerState) error {
+	if state == nil {
+		return fmt.Errorf("state cannot be nil")
+	}
+
+	// Validate server state
+	if err := ValidateServerState(state); err != nil {
+		return fmt.Errorf("invalid server state: %w", err)
+	}
+
+	serverPath, err := GetServerPath(state.Name)
+	if err != nil {
+		return fmt.Errorf("failed to get server path: %w", err)
+	}
+
+	// Update timestamp
+	state.UpdatedAt = time.Now()
+
+	// Marshal to YAML
+	data, err := yaml.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("failed to marshal server state: %w", err)
+	}
+
+	// Atomic write
+	if err := AtomicWrite(serverPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write server state: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteServerState deletes a server's state file.
+func DeleteServerState(ctx context.Context, name string) error {
+	if err := ValidateServerName(name); err != nil {
+		return err
+	}
+
+	serverPath, err := GetServerPath(name)
+	if err != nil {
+		return fmt.Errorf("failed to get server path: %w", err)
+	}
+
+	// Check if server file exists
+	if _, err := os.Stat(serverPath); os.IsNotExist(err) {
+		return fmt.Errorf("server %q does not exist", name)
+	}
+
+	// Delete file
+	if err := os.Remove(serverPath); err != nil {
+		return fmt.Errorf("failed to delete server file: %w", err)
+	}
+
+	return nil
+}
+
+// ServerExists checks if a server state file exists.
+func ServerExists(ctx context.Context, name string) (bool, error) {
+	if err := ValidateServerName(name); err != nil {
+		return false, err
+	}
+
+	serverPath, err := GetServerPath(name)
+	if err != nil {
+		return false, fmt.Errorf("failed to get server path: %w", err)
+	}
+
+	_, err = os.Stat(serverPath)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to check server file: %w", err)
+	}
+
+	return true, nil
+}
+
+// ListServerStates returns a list of all server state files.
+func ListServerStates(ctx context.Context) ([]string, error) {
+	serversDir, err := GetServersDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get servers directory: %w", err)
+	}
+
+	// Read directory
+	entries, err := os.ReadDir(serversDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to read servers directory: %w", err)
+	}
+
+	// Extract server names
+	servers := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+		// Remove .yaml extension
+		if len(name) > 5 && name[len(name)-5:] == ".yaml" {
+			serverName := name[:len(name)-5]
+			servers = append(servers, serverName)
+		}
+	}
+
+	return servers, nil
+}
+
+// ValidateServerState validates a server state.
+func ValidateServerState(state *ServerState) error {
+	if state == nil {
+		return fmt.Errorf("state cannot be nil")
+	}
+
+	// Validate name
+	if err := ValidateServerName(state.Name); err != nil {
+		return fmt.Errorf("invalid server name: %w", err)
+	}
+
+	// Validate ID if set
+	if state.ID != "" {
+		if err := ValidateUUID(state.ID); err != nil {
+			return fmt.Errorf("invalid server ID: %w", err)
+		}
+	}
+
+	// Validate status
+	validStatuses := []ServerStatus{StatusStopped, StatusRunning, StatusPaused, StatusError}
+	validStatus := false
+	for _, s := range validStatuses {
+		if state.Status == s {
+			validStatus = true
+			break
+		}
+	}
+	if !validStatus {
+		return fmt.Errorf("invalid server status: %q", state.Status)
+	}
+
+	// Validate Minecraft config
+	if state.Minecraft.Version != "" {
+		if err := ValidateVersion(state.Minecraft.Version); err != nil {
+			return fmt.Errorf("invalid Minecraft version: %w", err)
+		}
+	}
+
+	if state.Minecraft.Memory != "" {
+		if err := ValidateMemory(state.Minecraft.Memory); err != nil {
+			return fmt.Errorf("invalid memory: %w", err)
+		}
+	}
+
+	if state.Minecraft.JavaVersion != 0 {
+		if err := ValidateJavaVersion(state.Minecraft.JavaVersion); err != nil {
+			return fmt.Errorf("invalid Java version: %w", err)
+		}
+	}
+
+	if state.Minecraft.GamePort != 0 {
+		if err := ValidatePort(state.Minecraft.GamePort); err != nil {
+			return fmt.Errorf("invalid game port: %w", err)
+		}
+	}
+
+	if state.Minecraft.RconPort != 0 {
+		if err := ValidatePort(state.Minecraft.RconPort); err != nil {
+			return fmt.Errorf("invalid RCON port: %w", err)
+		}
+	}
+
+	// Validate whitelist names
+	for _, listName := range state.Whitelist.Lists {
+		if err := ValidateWhitelistName(listName); err != nil {
+			return fmt.Errorf("invalid whitelist name: %w", err)
+		}
+	}
+
+	// Validate ops
+	for _, op := range state.Ops {
+		if err := ValidateUUID(op.UUID); err != nil {
+			return fmt.Errorf("invalid op UUID: %w", err)
+		}
+		if err := ValidatePlayerName(op.Name); err != nil {
+			return fmt.Errorf("invalid op name: %w", err)
+		}
+		if err := ValidateOpLevel(op.Level); err != nil {
+			return fmt.Errorf("invalid op level: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// UpdateServerStatus updates a server's status and saves the state.
+func UpdateServerStatus(ctx context.Context, name string, status ServerStatus) error {
+	state, err := LoadServerState(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	state.Status = status
+
+	// Update timestamps
+	switch status {
+	case StatusRunning:
+		state.LastStarted = time.Now()
+	case StatusStopped:
+		state.LastStopped = time.Now()
+	}
+
+	return SaveServerState(ctx, state)
+}
+
+// AddMod adds a mod to a server's state.
+func AddMod(ctx context.Context, serverName string, mod ModInfo) error {
+	state, err := LoadServerState(ctx, serverName)
+	if err != nil {
+		return err
+	}
+
+	// Check if mod already exists
+	for _, m := range state.Mods {
+		if m.Slug == mod.Slug {
+			return fmt.Errorf("mod %q is already installed", mod.Slug)
+		}
+	}
+
+	state.Mods = append(state.Mods, mod)
+
+	return SaveServerState(ctx, state)
+}
+
+// RemoveMod removes a mod from a server's state.
+func RemoveMod(ctx context.Context, serverName, modSlug string) error {
+	state, err := LoadServerState(ctx, serverName)
+	if err != nil {
+		return err
+	}
+
+	// Find and remove mod
+	found := false
+	newMods := make([]ModInfo, 0, len(state.Mods))
+	for _, m := range state.Mods {
+		if m.Slug != modSlug {
+			newMods = append(newMods, m)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("mod %q is not installed", modSlug)
+	}
+
+	state.Mods = newMods
+
+	return SaveServerState(ctx, state)
+}
+
+// AddOp adds an operator to a server's state.
+func AddOp(ctx context.Context, serverName string, op OpInfo) error {
+	state, err := LoadServerState(ctx, serverName)
+	if err != nil {
+		return err
+	}
+
+	// Validate op
+	if err := ValidateUUID(op.UUID); err != nil {
+		return fmt.Errorf("invalid op UUID: %w", err)
+	}
+	if err := ValidatePlayerName(op.Name); err != nil {
+		return fmt.Errorf("invalid op name: %w", err)
+	}
+	if err := ValidateOpLevel(op.Level); err != nil {
+		return fmt.Errorf("invalid op level: %w", err)
+	}
+
+	// Check if op already exists
+	for _, o := range state.Ops {
+		if o.UUID == op.UUID {
+			return fmt.Errorf("operator %q is already added", op.Name)
+		}
+	}
+
+	state.Ops = append(state.Ops, op)
+
+	return SaveServerState(ctx, state)
+}
+
+// RemoveOp removes an operator from a server's state.
+func RemoveOp(ctx context.Context, serverName, uuid string) error {
+	state, err := LoadServerState(ctx, serverName)
+	if err != nil {
+		return err
+	}
+
+	// Find and remove op
+	found := false
+	newOps := make([]OpInfo, 0, len(state.Ops))
+	for _, o := range state.Ops {
+		if o.UUID != uuid {
+			newOps = append(newOps, o)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("operator with UUID %q is not found", uuid)
+	}
+
+	state.Ops = newOps
+
+	return SaveServerState(ctx, state)
+}
