@@ -179,10 +179,18 @@ func TestNewClient_ExplicitSocket_NotFound(t *testing.T) {
 
 // MockClient is a mock implementation of the Client interface for testing.
 type MockClient struct {
-	PingFunc    func(ctx context.Context) error
-	InfoFunc    func(ctx context.Context) (*RuntimeInfo, error)
-	CloseFunc   func() error
-	RuntimeFunc func() string
+	PingFunc             func(ctx context.Context) error
+	InfoFunc             func(ctx context.Context) (*RuntimeInfo, error)
+	CloseFunc            func() error
+	RuntimeFunc          func() string
+	CreateContainerFunc  func(ctx context.Context, config *ContainerConfig) (string, error)
+	StartContainerFunc   func(ctx context.Context, containerID string) error
+	WaitForContainerFunc func(ctx context.Context, containerID string, condition string) error
+	StopContainerFunc    func(ctx context.Context, containerID string, timeout *time.Duration) error
+	RestartContainerFunc func(ctx context.Context, containerID string, timeout *time.Duration) error
+	RemoveContainerFunc  func(ctx context.Context, containerID string, opts *RemoveOptions) error
+	InspectContainerFunc func(ctx context.Context, containerID string) (*ContainerInfo, error)
+	ListContainersFunc   func(ctx context.Context, opts *ListOptions) ([]*ContainerInfo, error)
 }
 
 func (m *MockClient) Ping(ctx context.Context) error {
@@ -219,6 +227,82 @@ func (m *MockClient) Runtime() string {
 		return m.RuntimeFunc()
 	}
 	return "podman"
+}
+
+func (m *MockClient) CreateContainer(ctx context.Context, config *ContainerConfig) (string, error) {
+	if m.CreateContainerFunc != nil {
+		return m.CreateContainerFunc(ctx, config)
+	}
+	return "mock-container-id", nil
+}
+
+func (m *MockClient) StartContainer(ctx context.Context, containerID string) error {
+	if m.StartContainerFunc != nil {
+		return m.StartContainerFunc(ctx, containerID)
+	}
+	return nil
+}
+
+func (m *MockClient) WaitForContainer(ctx context.Context, containerID string, condition string) error {
+	if m.WaitForContainerFunc != nil {
+		return m.WaitForContainerFunc(ctx, containerID, condition)
+	}
+	return nil
+}
+
+func (m *MockClient) StopContainer(ctx context.Context, containerID string, timeout *time.Duration) error {
+	if m.StopContainerFunc != nil {
+		return m.StopContainerFunc(ctx, containerID, timeout)
+	}
+	return nil
+}
+
+func (m *MockClient) RestartContainer(ctx context.Context, containerID string, timeout *time.Duration) error {
+	if m.RestartContainerFunc != nil {
+		return m.RestartContainerFunc(ctx, containerID, timeout)
+	}
+	return nil
+}
+
+func (m *MockClient) RemoveContainer(ctx context.Context, containerID string, opts *RemoveOptions) error {
+	if m.RemoveContainerFunc != nil {
+		return m.RemoveContainerFunc(ctx, containerID, opts)
+	}
+	return nil
+}
+
+func (m *MockClient) InspectContainer(ctx context.Context, containerID string) (*ContainerInfo, error) {
+	if m.InspectContainerFunc != nil {
+		return m.InspectContainerFunc(ctx, containerID)
+	}
+	return &ContainerInfo{
+		ID:      containerID,
+		Name:    "mock-container",
+		State:   "running",
+		Status:  "Up",
+		Image:   "alpine:latest",
+		Ports:   map[int]int{},
+		Created: time.Now(),
+		Labels:  map[string]string{},
+	}, nil
+}
+
+func (m *MockClient) ListContainers(ctx context.Context, opts *ListOptions) ([]*ContainerInfo, error) {
+	if m.ListContainersFunc != nil {
+		return m.ListContainersFunc(ctx, opts)
+	}
+	return []*ContainerInfo{
+		{
+			ID:      "mock-container-1",
+			Name:    "container1",
+			State:   "running",
+			Status:  "Up",
+			Image:   "alpine:latest",
+			Ports:   map[int]int{},
+			Created: time.Now(),
+			Labels:  map[string]string{},
+		},
+	}, nil
 }
 
 func TestMockClient(t *testing.T) {
