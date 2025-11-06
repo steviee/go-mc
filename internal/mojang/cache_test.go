@@ -278,3 +278,65 @@ func TestCache_Concurrent(t *testing.T) {
 	// No panics or race conditions should occur
 	assert.True(t, cache.Len() > 0)
 }
+
+func TestCache_ModificationSafety(t *testing.T) {
+	cache := NewCache(10, 1*time.Hour)
+
+	// Set original entry
+	original := CacheEntry{
+		Profile: &Profile{
+			UUID:     "original-uuid",
+			Username: "OriginalUser",
+		},
+		NotFound: false,
+	}
+	cache.Set("TestUser", original)
+
+	// Get entry and modify it
+	entry := cache.Get("TestUser")
+	assert.NotNil(t, entry)
+	assert.NotNil(t, entry.Profile)
+
+	// Modify the returned entry
+	entry.Profile.UUID = "modified-uuid"
+	entry.Profile.Username = "ModifiedUser"
+	entry.NotFound = true
+
+	// Verify cache entry is unchanged
+	cached := cache.Get("TestUser")
+	assert.NotNil(t, cached)
+	assert.NotNil(t, cached.Profile)
+	assert.Equal(t, "original-uuid", cached.Profile.UUID, "cache entry UUID should not be modified")
+	assert.Equal(t, "OriginalUser", cached.Profile.Username, "cache entry username should not be modified")
+	assert.False(t, cached.NotFound, "cache entry NotFound should not be modified")
+}
+
+func TestCache_ModificationSafety_NilProfile(t *testing.T) {
+	cache := NewCache(10, 1*time.Hour)
+
+	// Set entry with nil profile (negative result)
+	original := CacheEntry{
+		Profile:  nil,
+		NotFound: true,
+	}
+	cache.Set("NonExistent", original)
+
+	// Get entry
+	entry := cache.Get("NonExistent")
+	assert.NotNil(t, entry)
+	assert.Nil(t, entry.Profile)
+	assert.True(t, entry.NotFound)
+
+	// Modify the returned entry by adding a profile
+	entry.Profile = &Profile{
+		UUID:     "should-not-affect-cache",
+		Username: "ShouldNotAffectCache",
+	}
+	entry.NotFound = false
+
+	// Verify cache entry is unchanged
+	cached := cache.Get("NonExistent")
+	assert.NotNil(t, cached)
+	assert.Nil(t, cached.Profile, "cache entry profile should remain nil")
+	assert.True(t, cached.NotFound, "cache entry NotFound should remain true")
+}
