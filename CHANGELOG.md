@@ -168,6 +168,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Context-aware cancellation support
   - 93.4% test coverage for Mojang API client
   - 2,500+ lines of implementation and tests
+- Interactive TUI dashboard with real-time monitoring (#12)
+  - Command: `go-mc servers top` (alias: `dashboard`)
+  - Real-time server monitoring with 1-second auto-refresh
+  - Interactive server list with keyboard navigation (↑/↓, j/k)
+  - Status indicators with colors (green=running, red=stopped, yellow=created)
+  - Server information display (name, status, version, port, memory, uptime)
+  - Quick actions via keyboard shortcuts (s=start, x=stop, r=restart, q=quit)
+  - Selected row highlighting with visual feedback
+  - Error display with auto-clear after 3 seconds
+  - Terminal resize handling
+  - Styled with lipgloss (header, table, footer, colors)
+  - Graceful shutdown on 'q' or Ctrl+C
+  - Non-blocking async operations for server actions
+  - 73.3% test coverage for TUI package
+  - ~1,825 lines of implementation and tests
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
