@@ -296,6 +296,12 @@ func TestSetupSignalHandler(t *testing.T) {
 }
 
 func TestReadPIDFromFile(t *testing.T) {
+	// Test file not found error first
+	t.Run("file not found", func(t *testing.T) {
+		_, err := readPIDFromFile("/nonexistent/path/test.pid")
+		require.Error(t, err)
+	})
+
 	tests := []struct {
 		name        string
 		content     string

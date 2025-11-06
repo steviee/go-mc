@@ -1,0 +1,18 @@
+Generating coverage report...
+go test -race -coverprofile=coverage.out -covermode=atomic ./...
+	github.com/steviee/go-mc/cmd/go-mc		coverage: 0.0% of statements
+ok  	github.com/steviee/go-mc/internal/cli	(cached)	coverage: 85.4% of statements
+ok  	github.com/steviee/go-mc/internal/cli/config	(cached)	coverage: 100.0% of statements
+ok  	github.com/steviee/go-mc/internal/cli/mods	(cached)	coverage: 95.7% of statements
+ok  	github.com/steviee/go-mc/internal/cli/servers	(cached)	coverage: 59.1% of statements
+ok  	github.com/steviee/go-mc/internal/cli/system	(cached)	coverage: 31.1% of statements
+ok  	github.com/steviee/go-mc/internal/cli/users	(cached)	coverage: 87.3% of statements
+ok  	github.com/steviee/go-mc/internal/cli/whitelist	(cached)	coverage: 89.1% of statements
+ok  	github.com/steviee/go-mc/internal/container	(cached)	coverage: 44.8% of statements
+ok  	github.com/steviee/go-mc/internal/modrinth	(cached)	coverage: 88.8% of statements
+ok  	github.com/steviee/go-mc/internal/mojang	(cached)	coverage: 93.5% of statements
+ok  	github.com/steviee/go-mc/internal/state	(cached)	coverage: 78.9% of statements
+ok  	github.com/steviee/go-mc/internal/tui	(cached)	coverage: 72.5% of statements
+go tool cover -html=coverage.out -o coverage.html
+Coverage: 68.8%
+✅ Coverage report: coverage.html

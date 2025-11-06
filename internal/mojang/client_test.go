@@ -416,3 +416,76 @@ func TestValidateUsername(t *testing.T) {
 		})
 	}
 }
+
+func TestAPIError_Error(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+		message    string
+		want       string
+	}{
+		{
+			name:       "basic error",
+			statusCode: 404,
+			message:    "not found",
+			want:       "mojang API error (status 404): not found",
+		},
+		{
+			name:       "rate limit error",
+			statusCode: 429,
+			message:    "too many requests",
+			want:       "mojang API error (status 429): too many requests",
+		},
+		{
+			name:       "server error",
+			statusCode: 500,
+			message:    "internal server error",
+			want:       "mojang API error (status 500): internal server error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := &APIError{
+				StatusCode: tt.statusCode,
+				Message:    tt.message,
+			}
+			assert.Equal(t, tt.want, err.Error())
+		})
+	}
+}
+
+func TestNewAPIError(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+		message    string
+	}{
+		{
+			name:       "create not found error",
+			statusCode: 404,
+			message:    "player not found",
+		},
+		{
+			name:       "create rate limit error",
+			statusCode: 429,
+			message:    "rate limit exceeded",
+		},
+		{
+			name:       "create generic error",
+			statusCode: 503,
+			message:    "service unavailable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := NewAPIError(tt.statusCode, tt.message)
+			require.NotNil(t, err)
+			assert.Equal(t, tt.statusCode, err.StatusCode)
+			assert.Equal(t, tt.message, err.Message)
+			assert.Contains(t, err.Error(), tt.message)
+			assert.Contains(t, err.Error(), "mojang API error")
+		})
+	}
+}
