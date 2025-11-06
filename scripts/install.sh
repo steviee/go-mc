@@ -188,8 +188,10 @@ go-mc Installation Script
 Usage: $0 [OPTIONS]
 
 Options:
-  --version <version>    Install specific version (e.g., v0.0.7)
+  --version <version>    Install specific go-mc release version (e.g., v0.0.8)
+                         NOT the Debian version! Use go-mc release tags.
                          Default: latest
+                         See releases: https://github.com/$REPO/releases
 
   --install-dir <dir>    Custom installation directory
                          Default: /usr/local/bin
@@ -207,8 +209,8 @@ Examples:
   # Install latest version
   $0
 
-  # Install specific version
-  $0 --version v0.0.7
+  # Install specific go-mc version (use release tag, not Debian version!)
+  $0 --version v0.0.8
 
   # Install to custom directory
   $0 --install-dir /usr/bin
@@ -217,8 +219,30 @@ Examples:
   curl -fsSL https://raw.githubusercontent.com/steviee/go-mc/main/scripts/install.sh | sudo bash
 
 Repository: https://github.com/$REPO
+Available versions: https://github.com/$REPO/releases
 
 EOF
+}
+
+validate_version() {
+    local version=$1
+
+    # Check if version contains spaces
+    if [[ "$version" =~ [[:space:]] ]]; then
+        log_error "Invalid version format: '$version'"
+        log_error "Version must be a go-mc release tag (e.g., v0.0.8), not a Debian version"
+        log_info "To see available versions, visit: https://github.com/$REPO/releases"
+        log_info "Example: --version v0.0.8"
+        return 1
+    fi
+
+    # Check if version starts with 'v'
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        log_warning "Version '$version' doesn't follow semver format (vX.Y.Z)"
+        log_warning "This may fail if the release doesn't exist"
+    fi
+
+    return 0
 }
 
 parse_args() {
@@ -231,6 +255,9 @@ parse_args() {
                     exit 1
                 fi
                 VERSION="$2"
+                if ! validate_version "$VERSION"; then
+                    exit 1
+                fi
                 shift 2
                 ;;
             --install-dir)
