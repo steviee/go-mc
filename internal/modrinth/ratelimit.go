@@ -30,7 +30,6 @@ func NewRateLimiter(limit int, interval time.Duration) *RateLimiter {
 // Wait blocks until a token is available or context is cancelled.
 func (r *RateLimiter) Wait(ctx context.Context) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 
 	// Refill tokens based on time passed
 	now := time.Now()
@@ -43,7 +42,7 @@ func (r *RateLimiter) Wait(ctx context.Context) error {
 	// If no tokens available, wait for refill
 	if r.tokens <= 0 {
 		waitTime := r.interval - elapsed
-		r.mu.Unlock()
+		r.mu.Unlock() // Explicit unlock before blocking wait
 
 		select {
 		case <-time.After(waitTime):
@@ -52,13 +51,14 @@ func (r *RateLimiter) Wait(ctx context.Context) error {
 			r.tokens = r.limit
 			r.lastRefill = time.Now()
 		case <-ctx.Done():
-			r.mu.Lock()
+			// Context cancelled, return without reacquiring lock
 			return ctx.Err()
 		}
 	}
 
 	// Consume a token
 	r.tokens--
+	r.mu.Unlock() // Explicit unlock
 	return nil
 }
 
