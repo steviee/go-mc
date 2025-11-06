@@ -65,7 +65,7 @@ Create an **opinionated, production-ready CLI tool** for managing Minecraft Fabr
 
 ```bash
 # Download and install (auto-detects architecture)
-curl -fsSL https://raw.githubusercontent.com/steviee/go-mc/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/steviee/go-mc/main/scripts/install.sh | sudo bash
 
 # First-time setup (installs Podman, curl, git if needed)
 go-mc system setup
