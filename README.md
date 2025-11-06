@@ -1499,21 +1499,21 @@ go-mc/
 - [x] Set up GitHub Issues + Milestones
 - [x] Configure GitHub workflows (lint, test, security, release)
 
-### Phase 1: Core CLI & State Management
+### Phase 1: Core CLI & State Management ✅
 - [x] Set up Cobra CLI framework
-- [ ] Implement YAML state management
+- [x] Implement YAML state management
 - [x] Create config loading/validation
-- [ ] Implement PID-based locking
+- [x] Implement PID-based locking
 - [x] Add structured logging
 - [x] `version` and `config` commands (placeholders)
 
-### Phase 2: Podman Integration
-- [ ] Initialize Podman client
-- [ ] Container lifecycle operations (create/start/stop/remove)
-- [ ] Network management
-- [ ] Volume management
-- [ ] Stats streaming
-- [ ] Port allocation strategy
+### Phase 2: Podman Integration ✅
+- [x] Initialize Podman client
+- [x] Container lifecycle operations (create/start/stop/remove)
+- [x] Network management
+- [x] Volume management
+- [x] Stats streaming
+- [x] Port allocation strategy
 
 ### Phase 3: Server Lifecycle Commands
 - [x] `servers create` command
