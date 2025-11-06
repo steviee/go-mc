@@ -321,6 +321,7 @@ func isAlreadyInitialized() (bool, error) {
 func checkDependencies() ([]Dependency, error) {
 	deps := []Dependency{
 		{Name: "Podman", Command: "podman", Package: "podman", Required: true, Installed: false},
+		{Name: "PolicyKit", Command: "pkaction", Package: "policykit-1", Required: true, Installed: false},
 		{Name: "curl", Command: "curl", Package: "curl", Required: false, Installed: false},
 		{Name: "git", Command: "git", Package: "git", Required: false, Installed: false},
 	}

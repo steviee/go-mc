@@ -94,6 +94,7 @@ func TestCheckDependencies(t *testing.T) {
 
 	// Check that required dependencies are marked as such
 	foundPodman := false
+	foundPolicyKit := false
 	for _, dep := range deps {
 		if dep.Command == "podman" {
 			foundPodman = true
@@ -101,8 +102,15 @@ func TestCheckDependencies(t *testing.T) {
 			assert.Equal(t, "Podman", dep.Name)
 			assert.Equal(t, "podman", dep.Package)
 		}
+		if dep.Command == "pkaction" {
+			foundPolicyKit = true
+			assert.True(t, dep.Required, "PolicyKit should be required")
+			assert.Equal(t, "PolicyKit", dep.Name)
+			assert.Equal(t, "policykit-1", dep.Package)
+		}
 	}
 	assert.True(t, foundPodman, "Podman should be in dependency list")
+	assert.True(t, foundPolicyKit, "PolicyKit should be in dependency list")
 }
 
 func TestFilterMissing(t *testing.T) {

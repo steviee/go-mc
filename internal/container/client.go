@@ -286,11 +286,18 @@ func checkSocketPermissions(socketPath string) error {
 
 // getNoRuntimeMessage returns a user-friendly message when no runtime is available.
 func getNoRuntimeMessage() string {
-	return `No container runtime available. Please install Podman:
-  Debian/Ubuntu: sudo apt install podman
+	return `No container runtime available.
+
+RECOMMENDED: Run the automated setup:
+  go-mc system setup
+
+This will install and configure Podman, polkitd, and all required dependencies.
+
+MANUAL INSTALLATION (if needed):
+  Debian/Ubuntu: sudo apt install podman policykit-1
   For other systems: https://podman.io/getting-started/installation
 
-After installation, enable and start the Podman socket:
+After manual installation, enable and start the Podman socket:
   systemctl --user enable --now podman.socket`
 }
 
