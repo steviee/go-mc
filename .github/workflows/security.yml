@@ -84,7 +84,8 @@ jobs:
 
       - name: Check for known vulnerabilities in go.mod
         run: |
-          go list -json -m all | go run golang.org/x/vuln/cmd/govulncheck@latest -mode=convert -
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   container-scan:
     name: Container Image Security Scan
