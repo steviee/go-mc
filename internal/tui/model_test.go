@@ -86,23 +86,20 @@ func (m *mockContainerClient) ListContainers(ctx context.Context, opts *containe
 }
 
 func TestNewModel(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
 
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	assert.NotNil(t, model)
 	assert.Equal(t, 0, model.selectedIdx)
 	assert.True(t, model.loading)
 	assert.Empty(t, model.servers)
-	assert.Equal(t, ctx, model.ctx)
 	assert.Equal(t, client, model.containerClient)
 }
 
 func TestModelUpdate_WindowSize(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	msg := tea.WindowSizeMsg{
 		Width:  100,
@@ -156,9 +153,8 @@ func TestModelUpdate_ServersLoaded(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			client := &mockContainerClient{}
-			model := NewModel(ctx, client)
+			model := NewModel(client)
 			model.loading = true
 
 			msg := serversLoadedMsg{
@@ -234,9 +230,8 @@ func TestModelUpdate_KeyNavigation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			client := &mockContainerClient{}
-			model := NewModel(ctx, client)
+			model := NewModel(client)
 			model.selectedIdx = tt.initialIdx
 			model.servers = make([]ServerInfo, tt.serversCount)
 			for i := 0; i < tt.serversCount; i++ {
@@ -272,9 +267,8 @@ func TestModelUpdate_QuitKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			client := &mockContainerClient{}
-			model := NewModel(ctx, client)
+			model := NewModel(client)
 
 			var msg tea.Msg
 			if tt.key == "ctrl+c" {
@@ -293,9 +287,8 @@ func TestModelUpdate_QuitKeys(t *testing.T) {
 }
 
 func TestModelUpdate_ClearError(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.err = assert.AnError
 	model.errorTime = time.Now().Add(-4 * time.Second) // Error from 4 seconds ago
 
@@ -307,9 +300,8 @@ func TestModelUpdate_ClearError(t *testing.T) {
 }
 
 func TestModelUpdate_ClearError_Recent(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.err = assert.AnError
 	model.errorTime = time.Now().Add(-1 * time.Second) // Error from 1 second ago
 

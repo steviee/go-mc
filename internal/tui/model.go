@@ -32,19 +32,17 @@ type Model struct {
 	width           int
 	height          int
 	containerClient container.Client
-	ctx             context.Context
 	quitting        bool
 }
 
 // NewModel creates a new TUI model
-func NewModel(ctx context.Context, client container.Client) *Model {
+func NewModel(client container.Client) *Model {
 	return &Model{
 		servers:         []ServerInfo{},
 		selectedIdx:     0,
 		lastUpdate:      time.Now(),
 		loading:         true,
 		containerClient: client,
-		ctx:             ctx,
 	}
 }
 
@@ -52,7 +50,7 @@ func NewModel(ctx context.Context, client container.Client) *Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		tickCmd(),
-		loadServersCmd(m.ctx, m.containerClient),
+		loadServersCmd(context.Background(), m.containerClient),
 	)
 }
 

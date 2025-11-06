@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"
@@ -10,9 +9,8 @@ import (
 )
 
 func TestView_NoServers(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.loading = false
 	model.servers = []ServerInfo{}
 
@@ -23,9 +21,8 @@ func TestView_NoServers(t *testing.T) {
 }
 
 func TestView_Loading(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.loading = true
 	model.servers = []ServerInfo{}
 
@@ -35,9 +32,8 @@ func TestView_Loading(t *testing.T) {
 }
 
 func TestView_WithServers(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.loading = false
 	model.servers = []ServerInfo{
 		{
@@ -91,9 +87,8 @@ func TestView_WithServers(t *testing.T) {
 }
 
 func TestView_WithError(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.loading = false
 	model.servers = []ServerInfo{}
 	model.err = assert.AnError
@@ -105,9 +100,8 @@ func TestView_WithError(t *testing.T) {
 }
 
 func TestView_Quitting(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.quitting = true
 
 	view := model.View()
@@ -116,9 +110,8 @@ func TestView_Quitting(t *testing.T) {
 }
 
 func TestRenderHeader(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.lastUpdate = time.Date(2025, 1, 1, 14, 30, 25, 0, time.UTC)
 	model.width = 80
 
@@ -129,9 +122,8 @@ func TestRenderHeader(t *testing.T) {
 }
 
 func TestRenderTable(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{
 			Name:        "testserver",
@@ -156,9 +148,8 @@ func TestRenderTable(t *testing.T) {
 }
 
 func TestRenderFooter(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	footer := model.renderFooter()
 
@@ -241,9 +232,8 @@ func TestGetStatusIndicator(t *testing.T) {
 }
 
 func TestView_MultipleServers_Selection(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.loading = false
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "running", Version: "1.20.4", Port: 25565},

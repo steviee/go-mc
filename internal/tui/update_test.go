@@ -10,9 +10,8 @@ import (
 )
 
 func TestHandleKeyPress_NoServers(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{} // Empty list
 
 	// Try to navigate - should have no effect
@@ -24,9 +23,8 @@ func TestHandleKeyPress_NoServers(t *testing.T) {
 }
 
 func TestHandleKeyPress_Actions_NoServers(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{} // Empty list
 
 	// Try to perform action - should have no effect
@@ -42,9 +40,8 @@ func TestHandleKeyPress_Actions_NoServers(t *testing.T) {
 }
 
 func TestModelUpdate_Tick_WhileQuitting(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.quitting = true
 
 	msg := tickMsg(time.Now())
@@ -56,9 +53,8 @@ func TestModelUpdate_Tick_WhileQuitting(t *testing.T) {
 }
 
 func TestModelUpdate_ServerAction_Success(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	msg := serverActionMsg{
 		action: "start",
@@ -75,9 +71,8 @@ func TestModelUpdate_ServerAction_Success(t *testing.T) {
 }
 
 func TestModelUpdate_ServerAction_Error(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	msg := serverActionMsg{
 		action: "start",
@@ -96,9 +91,8 @@ func TestModelUpdate_ServerAction_Error(t *testing.T) {
 }
 
 func TestModelUpdate_ErrorMsg(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 
 	msg := errorMsg{
 		err: assert.AnError,
@@ -113,9 +107,8 @@ func TestModelUpdate_ErrorMsg(t *testing.T) {
 }
 
 func TestModelUpdate_AdjustSelectedIdx(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.selectedIdx = 5
 	model.servers = []ServerInfo{
 		{Name: "server1"},
@@ -227,9 +220,8 @@ func TestClearErrorCmd(t *testing.T) {
 }
 
 func TestModelUpdate_SelectedIndexAdjustment_EmptyList(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.selectedIdx = 2
 
 	msg := serversLoadedMsg{
@@ -244,9 +236,8 @@ func TestModelUpdate_SelectedIndexAdjustment_EmptyList(t *testing.T) {
 }
 
 func TestHandleKeyPress_StartServer_AlreadyRunning(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "running"},
 	}
@@ -262,9 +253,8 @@ func TestHandleKeyPress_StartServer_AlreadyRunning(t *testing.T) {
 }
 
 func TestHandleKeyPress_StopServer_NotRunning(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "stopped"},
 	}
@@ -280,9 +270,8 @@ func TestHandleKeyPress_StopServer_NotRunning(t *testing.T) {
 }
 
 func TestHandleKeyPress_RestartServer_NotRunning(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "stopped"},
 	}
@@ -298,9 +287,8 @@ func TestHandleKeyPress_RestartServer_NotRunning(t *testing.T) {
 }
 
 func TestHandleKeyPress_LogsNotImplemented(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "running"},
 	}
@@ -316,9 +304,8 @@ func TestHandleKeyPress_LogsNotImplemented(t *testing.T) {
 }
 
 func TestHandleKeyPress_DeleteNotImplemented(t *testing.T) {
-	ctx := context.Background()
 	client := &mockContainerClient{}
-	model := NewModel(ctx, client)
+	model := NewModel(client)
 	model.servers = []ServerInfo{
 		{Name: "server1", Status: "running"},
 	}

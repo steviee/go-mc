@@ -54,7 +54,7 @@ func runTop(ctx context.Context) error {
 	defer func() { _ = containerClient.Close() }()
 
 	// Create TUI model
-	model := tui.NewModel(ctx, containerClient)
+	model := tui.NewModel(containerClient)
 
 	// Start bubbletea program
 	p := tea.NewProgram(model, tea.WithAltScreen())
