@@ -100,7 +100,7 @@ The server is created in a stopped state. Use --start to start it immediately.`,
 
   # Create with initial mods
   go-mc servers create myserver --mods fabric-api,sodium`,
-		Args: cobra.ExactArgs(1),
+		Args: requireServerName,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCreate(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), args[0], flags)
 		},

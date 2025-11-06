@@ -64,7 +64,7 @@ Sort options:
 
   # Get JSON output for scripting
   go-mc mods search lithium --json`,
-		Args: cobra.ExactArgs(1),
+		Args: requireSearchQuery,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSearch(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), args[0])
 		},
