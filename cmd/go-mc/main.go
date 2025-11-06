@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -25,20 +26,21 @@ func main() {
 	}
 	defer func() { _ = pidLock.Release() }()
 
+	// Create cancellable context for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Setup signal handler for graceful shutdown
 	sigChan := state.SetupSignalHandler()
 	go func() {
 		<-sigChan
-		// Release lock on signal
-		_ = pidLock.Release()
-		os.Exit(0)
+		cancel() // Signal shutdown via context cancellation
 	}()
 
-	// Execute CLI commands
+	// Execute CLI commands with context
 	rootCmd := cli.NewRootCommand(Version, Commit, Date, BuiltBy)
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		_ = pidLock.Release()
 		os.Exit(1)
 	}
 }
