@@ -155,3 +155,40 @@ func TestOutputCreateHuman(t *testing.T) {
 	assert.Contains(t, output, "test")
 	assert.Contains(t, output, "Created at")
 }
+
+func TestOutputError(t *testing.T) {
+	tests := []struct {
+		name       string
+		jsonOutput bool
+		err        error
+		wantOutput bool
+	}{
+		{
+			name:       "non-JSON mode",
+			jsonOutput: false,
+			err:        assert.AnError,
+			wantOutput: false,
+		},
+		{
+			name:       "JSON mode",
+			jsonOutput: true,
+			err:        assert.AnError,
+			wantOutput: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			returnedErr := outputError(&buf, tt.jsonOutput, tt.err)
+			assert.Equal(t, tt.err, returnedErr)
+
+			if tt.wantOutput {
+				assert.NotEmpty(t, buf.String())
+				assert.Contains(t, buf.String(), "error")
+			} else {
+				assert.Empty(t, buf.String())
+			}
+		})
+	}
+}

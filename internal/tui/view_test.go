@@ -231,6 +231,29 @@ func TestGetStatusIndicator(t *testing.T) {
 	}
 }
 
+func TestGetStatusStyle(t *testing.T) {
+	tests := []struct {
+		status string
+		name   string
+	}{
+		{"running", "running status"},
+		{"stopped", "stopped status"},
+		{"exited", "exited status"},
+		{"created", "created status"},
+		{"missing", "missing status"},
+		{"unknown", "unknown status"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			style := getStatusStyle(tt.status)
+			assert.NotNil(t, style)
+			// Just verify that calling the function doesn't panic
+			// and returns a valid style
+		})
+	}
+}
+
 func TestView_MultipleServers_Selection(t *testing.T) {
 	client := &mockContainerClient{}
 	model := NewModel(client)

@@ -123,6 +123,20 @@ func TestParsePortMapping(t *testing.T) {
 			wantContainer: 0,
 			wantErr:       true,
 		},
+		{
+			name:          "invalid single port",
+			input:         "notaport",
+			wantHost:      0,
+			wantContainer: 0,
+			wantErr:       true,
+		},
+		{
+			name:          "empty string",
+			input:         "",
+			wantHost:      0,
+			wantContainer: 0,
+			wantErr:       true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -312,3 +312,20 @@ func TestModelUpdate_ClearError_Recent(t *testing.T) {
 	// Error should still be there since it's less than 3 seconds old
 	assert.NotNil(t, m.err)
 }
+
+func TestLoadServersCmd(t *testing.T) {
+	client := &mockContainerClient{}
+	ctx := context.Background()
+
+	// Test that loadServersCmd returns a function
+	cmd := loadServersCmd(ctx, client)
+	assert.NotNil(t, cmd)
+
+	// Execute the command and verify it returns a message
+	msg := cmd()
+	assert.NotNil(t, msg)
+
+	// Verify the message is of the correct type
+	_, ok := msg.(serversLoadedMsg)
+	assert.True(t, ok, "expected serversLoadedMsg type")
+}

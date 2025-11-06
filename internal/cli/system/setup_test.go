@@ -1,10 +1,14 @@
 package system
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/steviee/go-mc/internal/state"
@@ -432,4 +436,85 @@ PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"`
 	for i := 0; i < b.N; i++ {
 		_ = checkOSCompatibilityFromString(osRelease)
 	}
+}
+
+func TestPrintHeader(t *testing.T) {
+	// Create a buffer to capture output
+	var buf strings.Builder
+
+	printHeader(&buf)
+
+	output := buf.String()
+	assert.Contains(t, output, "go-mc System Setup")
+	assert.Contains(t, output, "==================")
+}
+
+func TestOutputSuccess(t *testing.T) {
+	t.Run("json mode", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		err := outputSuccess(&buf, true)
+		require.NoError(t, err)
+
+		var output SetupOutput
+		err = json.NewDecoder(&buf).Decode(&output)
+		require.NoError(t, err)
+
+		assert.Equal(t, "success", output.Status)
+		assert.Equal(t, "Setup completed successfully", output.Message)
+		assert.NotNil(t, output.Data)
+
+		// Check next steps are present
+		nextSteps, ok := output.Data["next_steps"].([]interface{})
+		require.True(t, ok)
+		assert.Len(t, nextSteps, 3)
+	})
+
+	t.Run("text mode", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		err := outputSuccess(&buf, false)
+		require.NoError(t, err)
+
+		output := buf.String()
+		assert.Contains(t, output, "Setup completed successfully!")
+		assert.Contains(t, output, "Next steps:")
+		assert.Contains(t, output, "go-mc servers create")
+		assert.Contains(t, output, "go-mc servers start")
+		assert.Contains(t, output, "go-mc servers top")
+	})
+}
+
+func TestOutputError(t *testing.T) {
+	testErr := fmt.Errorf("test error message")
+
+	t.Run("json mode", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		err := outputError(&buf, true, testErr)
+		assert.Equal(t, testErr, err) // Should return the original error
+
+		var output SetupOutput
+		err = json.NewDecoder(&buf).Decode(&output)
+		require.NoError(t, err)
+
+		assert.Equal(t, "error", output.Status)
+		assert.Equal(t, "test error message", output.Error)
+	})
+
+	t.Run("text mode", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		err := outputError(&buf, false, testErr)
+		assert.Equal(t, testErr, err) // Should return the original error
+
+		// In text mode, nothing is written to stdout (error is just returned)
+		assert.Empty(t, buf.String())
+	})
+}
+
+func TestIsJSONMode(t *testing.T) {
+	// Test that isJSONMode returns false (current implementation)
+	result := isJSONMode()
+	assert.False(t, result, "isJSONMode should return false until JSON mode is implemented")
 }

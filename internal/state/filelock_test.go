@@ -205,3 +205,26 @@ func TestFileLock_MultipleLocks(t *testing.T) {
 		require.NoError(t, err)
 	}
 }
+
+func TestFileLock_Accessors(t *testing.T) {
+	tmpDir := t.TempDir()
+	lockPath := filepath.Join(tmpDir, "accessor.lock")
+
+	lock, err := LockFile(lockPath)
+	require.NoError(t, err)
+	defer func() { _ = lock.Unlock() }()
+
+	// Test File() accessor
+	f := lock.File()
+	require.NotNil(t, f)
+	assert.NotNil(t, f.Fd(), "file descriptor should be valid")
+
+	// Test Path() accessor
+	path := lock.Path()
+	assert.Equal(t, lockPath, path)
+
+	// After unlock, File() should return nil
+	err = lock.Unlock()
+	require.NoError(t, err)
+	assert.Nil(t, lock.File(), "File() should return nil after Unlock")
+}

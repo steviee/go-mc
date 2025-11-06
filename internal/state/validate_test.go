@@ -329,6 +329,12 @@ func TestValidateWhitelistName(t *testing.T) {
 			wantErr:  true,
 			errMsg:   "must contain only alphanumeric",
 		},
+		{
+			name:     "name too long",
+			listName: "this-is-a-very-long-whitelist-name-that-exceeds-the-maximum-allowed-length-limit",
+			wantErr:  true,
+			errMsg:   "must be 63 characters or less",
+		},
 	}
 
 	for _, tt := range tests {
