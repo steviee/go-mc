@@ -449,8 +449,9 @@ main() {
     echo ""
 }
 
-# Run main function only if script is executed directly (not sourced)
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+# Run main function
+# Note: We check if not being sourced, but also handle curl | bash case
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] || [[ -z "${BASH_SOURCE[0]}" ]]; then
     parse_args "$@"
     main
 fi
