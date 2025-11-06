@@ -152,6 +152,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive validation and error handling
   - 31.1% unit test coverage (appropriate for integration-heavy code)
   - 1,100+ lines of implementation and tests
+- Global whitelist management with UUID lookup (#11)
+  - Mojang/Microsoft UUID lookup API client
+  - LRU cache with 1000 entries and 24h TTL (minimizes API calls)
+  - Exponential backoff retry logic (max 3 attempts, 2s delay)
+  - Negative result caching (404/not found responses)
+  - Thread-safe cache with case-insensitive username lookup
+  - Whitelist state management (CRUD operations)
+  - User management commands: `users add`, `users remove`, `users list`
+  - Whitelist management commands: `whitelist create`, `whitelist delete`, `whitelist list`
+  - Support for named whitelists and global default whitelist
+  - Batch operations (add/remove multiple users at once)
+  - JSON and human-readable output formats
+  - Graceful error handling with partial success reporting
+  - Context-aware cancellation support
+  - 93.4% test coverage for Mojang API client
+  - 2,500+ lines of implementation and tests
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
