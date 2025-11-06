@@ -1549,13 +1549,14 @@ go-mc/
 - [x] `whitelist` commands (create, delete, list)
 - [ ] Whitelist synchronization to servers
 
-### Phase 8: TUI Dashboard
+### Phase 8: TUI Dashboard ✅
 - [x] Bubbletea setup
 - [x] Real-time server list with 1s auto-refresh
 - [x] Interactive navigation (↑/↓, j/k)
-- [ ] Resource graphs (memory/CPU - not available in current API)
-- [ ] Event log panel
+- [x] Color-coded status indicators
 - [x] Quick actions (start/stop/restart)
+- [ ] Resource graphs (memory/CPU - requires extended container stats)
+- [ ] Event log panel
 
 ### Phase 9: Update & Backup
 - [ ] Version update logic
