@@ -49,8 +49,8 @@ func NewCache(capacity int, ttl time.Duration) *Cache {
 // Get retrieves a value from the cache.
 // Returns nil if the key doesn't exist or has expired.
 func (c *Cache) Get(username string) *CacheEntry {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	key := strings.ToLower(username)
 	elem, exists := c.items[key]
