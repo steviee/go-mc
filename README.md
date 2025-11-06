@@ -1542,12 +1542,12 @@ go-mc/
 - [ ] `mods list/update/remove` commands
 
 ### Phase 7: User & Whitelist Management
-- [ ] UUID lookup via Mojang/Microsoft API
-- [ ] Global whitelist management
-- [ ] `users add/remove/list` commands
+- [x] UUID lookup via Mojang/Microsoft API
+- [x] Global whitelist management
+- [x] `users add/remove/list` commands
 - [ ] `users ban/unban/op/deop` commands
-- [ ] `whitelist` commands
-- [ ] Whitelist synchronization
+- [x] `whitelist` commands (create, delete, list)
+- [ ] Whitelist synchronization to servers
 
 ### Phase 8: TUI Dashboard
 - [ ] Bubbletea setup

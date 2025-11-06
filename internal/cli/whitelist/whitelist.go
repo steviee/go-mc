@@ -34,13 +34,14 @@ that applies to all servers.`,
 		Aliases: []string{"wl"},
 	}
 
-	// Subcommands will be added in future phases
+	// Add subcommands
+	cmd.AddCommand(NewCreateCommand())
+	cmd.AddCommand(NewDeleteCommand())
+	cmd.AddCommand(NewListCommand())
+	// TODO: Add enable/disable/sync commands in future phases
 	// cmd.AddCommand(NewEnableCommand())
 	// cmd.AddCommand(NewDisableCommand())
-	// cmd.AddCommand(NewAddCommand())
-	// cmd.AddCommand(NewRemoveCommand())
-	// cmd.AddCommand(NewListCommand())
-	// cmd.AddCommand(NewGlobalCommand())
+	// cmd.AddCommand(NewSyncCommand())
 
 	return cmd
 }

@@ -34,10 +34,11 @@ resolved from usernames.`,
 		Aliases: []string{"user"},
 	}
 
-	// Subcommands will be added in future phases
-	// cmd.AddCommand(NewAddCommand())
-	// cmd.AddCommand(NewRemoveCommand())
-	// cmd.AddCommand(NewListCommand())
+	// Add subcommands
+	cmd.AddCommand(NewAddCommand())
+	cmd.AddCommand(NewRemoveCommand())
+	cmd.AddCommand(NewListCommand())
+	// TODO: Add OP commands in future phases
 	// cmd.AddCommand(NewOpCommand())
 	// cmd.AddCommand(NewDeopCommand())
 
