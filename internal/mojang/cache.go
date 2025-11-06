@@ -48,6 +48,7 @@ func NewCache(capacity int, ttl time.Duration) *Cache {
 
 // Get retrieves a value from the cache.
 // Returns nil if the key doesn't exist or has expired.
+// Returns a copy to prevent external modification of cached data.
 func (c *Cache) Get(username string) *CacheEntry {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -68,7 +69,21 @@ func (c *Cache) Get(username string) *CacheEntry {
 	// Move to front (most recently used)
 	c.lru.MoveToFront(elem)
 
-	return &item.value
+	// Return a deep copy to prevent external modification
+	entryCopy := CacheEntry{
+		Timestamp: item.value.Timestamp,
+		NotFound:  item.value.NotFound,
+	}
+
+	// Deep copy the Profile if it exists
+	if item.value.Profile != nil {
+		entryCopy.Profile = &Profile{
+			UUID:     item.value.Profile.UUID,
+			Username: item.value.Profile.Username,
+		}
+	}
+
+	return &entryCopy
 }
 
 // Set adds or updates a value in the cache.
