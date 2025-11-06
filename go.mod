@@ -1,6 +1,6 @@
 module github.com/steviee/go-mc
 
-go 1.22.6
+go 1.23
 
 require (
 	github.com/containers/common v0.61.0

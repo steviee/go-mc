@@ -155,6 +155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Go version upgraded from 1.21 to 1.22.6 (required by Podman v5 dependency)
+- Go version upgraded from 1.22.6 to 1.23 for latest features and security updates (#16)
+- GitHub Actions workflows updated to use Go 1.23
 - Replaced placeholder main.go with complete CLI implementation
 - Fixed Makefile install-hooks target syntax error
 - Coverage threshold adjusted from 69% to 67% (accounts for integration-only server creation functions)
