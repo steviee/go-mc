@@ -84,6 +84,51 @@ detect_arch() {
     esac
 }
 
+get_version_from_git_commit() {
+    local current_commit
+
+    # Try to get current git commit
+    if ! current_commit=$(git rev-parse HEAD 2>/dev/null); then
+        log_warning "Not in a git repository, cannot auto-detect version from commit"
+        return 1
+    fi
+
+    log_info "Detected git commit: ${current_commit:0:7}"
+    log_info "Searching for matching release..."
+
+    # Fetch all releases and find one matching this commit
+    local releases
+    releases=$(curl -fsSL "https://api.github.com/repos/$REPO/releases?per_page=50" 2>/dev/null)
+
+    if [ -z "$releases" ]; then
+        log_warning "Failed to fetch releases from GitHub"
+        return 1
+    fi
+
+    # Parse releases and find matching commit
+    local version
+    version=$(echo "$releases" | grep -B 5 "\"target_commitish\": \"$current_commit\"" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+    if [ -n "$version" ]; then
+        log_success "Found matching release: $version (commit: ${current_commit:0:7})"
+        echo "$version"
+        return 0
+    fi
+
+    # If exact match not found, check if there's a tag on this commit
+    local tag
+    tag=$(git describe --exact-match --tags HEAD 2>/dev/null)
+
+    if [ -n "$tag" ]; then
+        log_success "Found git tag on current commit: $tag"
+        echo "$tag"
+        return 0
+    fi
+
+    log_warning "No release found for commit ${current_commit:0:7}"
+    return 1
+}
+
 get_latest_version() {
     log_info "Fetching latest release version..."
 
@@ -190,7 +235,7 @@ Usage: $0 [OPTIONS]
 Options:
   --version <version>    Install specific go-mc release version (e.g., v0.0.8)
                          NOT the Debian version! Use go-mc release tags.
-                         Default: latest
+                         Default: Auto-detect from git commit, or latest if not in repo
                          See releases: https://github.com/$REPO/releases
 
   --install-dir <dir>    Custom installation directory
@@ -205,8 +250,13 @@ Options:
 Environment Variables:
   INSTALL_DIR            Installation directory (overridden by --install-dir)
 
+Version Detection:
+  When run without --version flag:
+  1. If in a git repository: finds release matching current commit/tag
+  2. Otherwise: installs latest release
+
 Examples:
-  # Install latest version
+  # Auto-detect version from git commit (if in repo), or install latest
   $0
 
   # Install specific go-mc version (use release tag, not Debian version!)
@@ -215,7 +265,7 @@ Examples:
   # Install to custom directory
   $0 --install-dir /usr/bin
 
-  # Install with pip-style pattern
+  # Install with pip-style pattern (auto-detects latest)
   curl -fsSL https://raw.githubusercontent.com/steviee/go-mc/main/scripts/install.sh | sudo bash
 
 Repository: https://github.com/$REPO
@@ -317,8 +367,14 @@ main() {
         version="$VERSION"
         log_info "Using specified version: $version"
     else
-        version=$(get_latest_version)
-        log_success "Latest version: $version"
+        # Try to auto-detect version from git commit first
+        if version=$(get_version_from_git_commit); then
+            log_info "Auto-detected version from git commit: $version"
+        else
+            # Fall back to latest version
+            version=$(get_latest_version)
+            log_success "Latest version: $version"
+        fi
     fi
 
     # Prepare download

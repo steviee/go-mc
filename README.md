@@ -64,7 +64,9 @@ Create an **opinionated, production-ready CLI tool** for managing Minecraft Fabr
 ### Installation
 
 ```bash
-# Download and install latest version (auto-detects architecture)
+# Download and install (auto-detects architecture and version)
+# - If run from git repo: installs version matching current commit
+# - Otherwise: installs latest release
 curl -fsSL https://raw.githubusercontent.com/steviee/go-mc/main/scripts/install.sh | sudo bash
 
 # Or install a specific version (use go-mc release tag, e.g., v0.0.8)
