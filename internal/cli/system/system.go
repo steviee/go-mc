@@ -33,6 +33,9 @@ or the go-mc installation itself.`,
 		Aliases: []string{"sys"},
 	}
 
+	// Add subcommands
+	cmd.AddCommand(NewSetupCommand())
+
 	// Subcommands will be added in future phases
 	// cmd.AddCommand(NewDashboardCommand())
 	// cmd.AddCommand(NewBackupCommand())

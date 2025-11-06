@@ -825,27 +825,32 @@ First-time setup - installs Podman, curl, git if needed (requires sudo).
 
 **Flags:**
 ```
---skip-deps        Skip dependency installation
---docker           Use Docker instead of Podman (not recommended)
+--non-interactive  Skip all prompts, assume yes to all (for scripts)
+--skip-deps        Skip dependency installation (if already installed)
+--force            Force setup even if already configured
 ```
 
 **Examples:**
 ```bash
-# Initial setup (interactive)
+# Initial setup (interactive with prompts)
 go-mc system setup
 
-# Automated setup (for scripts)
-sudo go-mc system setup --non-interactive
+# Automated setup (for scripts/CI)
+go-mc system setup --non-interactive
+
+# Re-run setup without reinstalling dependencies
+go-mc system setup --skip-deps --force
 ```
 
 **Operations:**
-1. Check OS compatibility (Debian 12/13)
-2. Install missing dependencies (Podman, curl, git)
-3. Configure Podman for rootless operation
-4. Create ~/.config/go-mc/ directory structure
-5. Generate default config.yaml
-6. Initialize state files
-7. Pull default container image
+1. Check OS compatibility (Debian 12/13 only)
+2. Detect missing dependencies (Podman, curl, git)
+3. Install missing dependencies via apt-get (requires sudo)
+4. Configure Podman for rootless operation (subuid/subgid, systemd socket)
+5. Create XDG directory structure (~/.config/go-mc/, ~/.local/share/go-mc/)
+6. Generate default config.yaml with sensible defaults
+7. Initialize global state with empty server registry
+8. Pull default container image (itzg/minecraft-server:latest)
 
 #### `system upgrade`
 
@@ -1560,8 +1565,8 @@ go-mc/
 - [ ] Backup rotation
 
 ### Phase 10: System Management
-- [ ] `system setup` (first-time installation)
-- [ ] Dependency installation (Podman, curl, git)
+- [x] `system setup` (first-time installation)
+- [x] Dependency installation (Podman, curl, git)
 - [ ] `system upgrade` command
 - [ ] `system status` command
 - [ ] `system cleanup` command
