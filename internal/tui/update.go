@@ -28,7 +28,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Auto-refresh server list
 		return m, tea.Batch(
 			tickCmd(),
-			loadServersCmd(m.ctx, m.containerClient),
+			loadServersCmd(context.Background(), m.containerClient),
 		)
 
 	case serversLoadedMsg:
@@ -62,7 +62,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Success - reload servers immediately
 		slog.Info("server action succeeded", "action", msg.action, "server", msg.server)
-		return m, loadServersCmd(m.ctx, m.containerClient)
+		return m, loadServersCmd(context.Background(), m.containerClient)
 
 	case clearErrorMsg:
 		// Only clear if error is older than 3 seconds
@@ -112,13 +112,14 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selectedIdx < len(m.servers) {
 			server := m.servers[m.selectedIdx]
 			if server.Status != "running" {
-				containerID, err := getServerContainerID(m.ctx, server.Name)
+				ctx := context.Background()
+				containerID, err := getServerContainerID(ctx, server.Name)
 				if err != nil {
 					m.err = fmt.Errorf("failed to get container ID: %w", err)
 					m.errorTime = time.Now()
 					return m, clearErrorCmd()
 				}
-				return m, startServerCmd(m.ctx, m.containerClient, server.Name, containerID)
+				return m, startServerCmd(ctx, m.containerClient, server.Name, containerID)
 			}
 		}
 		return m, nil
@@ -128,13 +129,14 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selectedIdx < len(m.servers) {
 			server := m.servers[m.selectedIdx]
 			if server.Status == "running" {
-				containerID, err := getServerContainerID(m.ctx, server.Name)
+				ctx := context.Background()
+				containerID, err := getServerContainerID(ctx, server.Name)
 				if err != nil {
 					m.err = fmt.Errorf("failed to get container ID: %w", err)
 					m.errorTime = time.Now()
 					return m, clearErrorCmd()
 				}
-				return m, stopServerCmd(m.ctx, m.containerClient, server.Name, containerID)
+				return m, stopServerCmd(ctx, m.containerClient, server.Name, containerID)
 			}
 		}
 		return m, nil
@@ -144,13 +146,14 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selectedIdx < len(m.servers) {
 			server := m.servers[m.selectedIdx]
 			if server.Status == "running" {
-				containerID, err := getServerContainerID(m.ctx, server.Name)
+				ctx := context.Background()
+				containerID, err := getServerContainerID(ctx, server.Name)
 				if err != nil {
 					m.err = fmt.Errorf("failed to get container ID: %w", err)
 					m.errorTime = time.Now()
 					return m, clearErrorCmd()
 				}
-				return m, restartServerCmd(m.ctx, m.containerClient, server.Name, containerID)
+				return m, restartServerCmd(ctx, m.containerClient, server.Name, containerID)
 			}
 		}
 		return m, nil
