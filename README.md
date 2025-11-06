@@ -1550,12 +1550,12 @@ go-mc/
 - [ ] Whitelist synchronization to servers
 
 ### Phase 8: TUI Dashboard
-- [ ] Bubbletea setup
-- [ ] Real-time server list
-- [ ] Interactive navigation
-- [ ] Resource graphs
+- [x] Bubbletea setup
+- [x] Real-time server list with 1s auto-refresh
+- [x] Interactive navigation (↑/↓, j/k)
+- [ ] Resource graphs (memory/CPU - not available in current API)
 - [ ] Event log panel
-- [ ] Quick actions (start/stop/logs)
+- [x] Quick actions (start/stop/restart)
 
 ### Phase 9: Update & Backup
 - [ ] Version update logic

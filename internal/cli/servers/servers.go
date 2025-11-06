@@ -39,6 +39,7 @@ You can also view server status, logs, and configuration.`,
 	cmd.AddCommand(NewStartCommand())
 	cmd.AddCommand(NewStopCommand())
 	cmd.AddCommand(NewRestartCommand())
+	cmd.AddCommand(NewTopCommand())
 
 	// Future subcommands
 	// cmd.AddCommand(NewStatusCommand())
