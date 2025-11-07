@@ -267,7 +267,8 @@ func getDockerSocket() string {
 // checkSocketPermissions checks if the socket is accessible.
 func checkSocketPermissions(socketPath string) error {
 	// Try to connect to the socket
-	conn, err := net.DialTimeout("unix", socketPath, 1*time.Second)
+	// Use 10 second timeout to allow for socket activation (systemd starts service on-demand)
+	conn, err := net.DialTimeout("unix", socketPath, 10*time.Second)
 	if err != nil {
 		// Check if it's a permission error
 		if os.IsPermission(err) {
