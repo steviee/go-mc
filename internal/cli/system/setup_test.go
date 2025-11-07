@@ -106,7 +106,7 @@ func TestCheckDependencies(t *testing.T) {
 			foundPolicyKit = true
 			assert.True(t, dep.Required, "PolicyKit should be required")
 			assert.Equal(t, "PolicyKit", dep.Name)
-			assert.Equal(t, "policykit-1", dep.Package)
+			assert.Equal(t, "polkitd", dep.Package)
 		}
 	}
 	assert.True(t, foundPodman, "Podman should be in dependency list")

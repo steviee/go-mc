@@ -75,7 +75,7 @@ func TestGetNoRuntimeMessage(t *testing.T) {
 	assert.Contains(t, msg, "No container runtime available")
 	assert.Contains(t, msg, "go-mc system setup")
 	assert.Contains(t, msg, "podman")
-	assert.Contains(t, msg, "policykit-1")
+	assert.Contains(t, msg, "polkitd")
 	assert.Contains(t, msg, "systemctl")
 }
 

@@ -294,7 +294,7 @@ RECOMMENDED: Run the automated setup:
 This will install and configure Podman, polkitd, and all required dependencies.
 
 MANUAL INSTALLATION (if needed):
-  Debian/Ubuntu: sudo apt install podman policykit-1
+  Debian/Ubuntu: sudo apt install podman polkitd
   For other systems: https://podman.io/getting-started/installation
 
 After manual installation, enable and start the Podman socket:
