@@ -394,11 +394,6 @@ func TestConfig_DefaultValues(t *testing.T) {
 	assert.Equal(t, time.Duration(0), cfg.Timeout)
 }
 
-func TestCheckSocketPermissions_NonExistentSocket(t *testing.T) {
-	err := checkSocketPermissions("/nonexistent/socket.sock")
-	assert.Error(t, err)
-}
-
 func TestClient_CloseNilClient(t *testing.T) {
 	// Create a mock client that's been closed
 	c := &client{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net"
 	"os"
 	"os/user"
 	"strconv"
@@ -131,23 +130,26 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 		return nil, NewRuntimeError(runtime, socketPath, ErrSocketNotFound)
 	}
 
-	// Check socket permissions
-	if err := checkSocketPermissions(socketPath); err != nil {
-		return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("%w: %v", ErrPermissionDenied, err))
-	}
-
 	// Create connection context with timeout
 	connCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	// Connect to Podman API
 	// The socket path needs to be in the format: unix:///path/to/socket
+	// Note: We skip pre-connection permission checks because:
+	// 1. bindings.NewConnection() handles all errors properly
+	// 2. Pre-checking triggers socket activation, then closes the connection
+	// 3. This causes the service to shut down before we can connect again
 	socketURI := fmt.Sprintf("unix://%s", socketPath)
 	conn, err := bindings.NewConnection(connCtx, socketURI)
 	if err != nil {
 		// Check if it's a connection timeout or daemon not running
 		if os.IsTimeout(err) || strings.Contains(err.Error(), "connection refused") {
 			return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("%w: %v", ErrDaemonNotRunning, err))
+		}
+		// Check for permission errors
+		if os.IsPermission(err) || strings.Contains(err.Error(), "permission denied") {
+			return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("%w: %v", ErrPermissionDenied, err))
 		}
 		return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("failed to connect: %w", err))
 	}
@@ -262,27 +264,6 @@ func getPodmanRootfulSocket() string {
 // getDockerSocket returns the path to the Docker socket.
 func getDockerSocket() string {
 	return "/var/run/docker.sock"
-}
-
-// checkSocketPermissions checks if the socket is accessible.
-func checkSocketPermissions(socketPath string) error {
-	// Try to connect to the socket
-	// Use 10 second timeout to allow for socket activation (systemd starts service on-demand)
-	conn, err := net.DialTimeout("unix", socketPath, 10*time.Second)
-	if err != nil {
-		// Check if it's a permission error
-		if os.IsPermission(err) {
-			return fmt.Errorf("permission denied")
-		}
-		return err
-	}
-
-	// Close the connection (we only needed to test connectivity)
-	if err := conn.Close(); err != nil {
-		return fmt.Errorf("failed to close test connection: %w", err)
-	}
-
-	return nil
 }
 
 // getNoRuntimeMessage returns a user-friendly message when no runtime is available.
