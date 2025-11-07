@@ -56,10 +56,15 @@ detect_os() {
 
     # Check if running on Debian (optional warning)
     if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        if [ "$ID" != "debian" ]; then
+        # Extract values without polluting global namespace
+        local os_id
+        local os_pretty_name
+        os_id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+        os_pretty_name=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+        if [ "$os_id" != "debian" ]; then
             log_warning "go-mc is designed for Debian 12/13"
-            log_warning "Detected: $PRETTY_NAME"
+            log_warning "Detected: $os_pretty_name"
             log_warning "Installation will continue, but compatibility is not guaranteed"
         fi
     fi
