@@ -47,7 +47,8 @@ func (c *client) CreateContainer(ctx context.Context, config *ContainerConfig) (
 	}
 
 	// Create container
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	response, err := containers.CreateWithSpec(timeoutCtx, spec, nil)
@@ -222,7 +223,8 @@ func parseMemory(mem string) (int64, error) {
 func (c *client) StartContainer(ctx context.Context, containerID string) error {
 	slog.Debug("starting container", "id", containerID)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	if err := containers.Start(timeoutCtx, containerID, nil); err != nil {
@@ -288,7 +290,8 @@ func (c *client) WaitForContainer(ctx context.Context, containerID string, condi
 	}
 
 	// For other conditions, use Podman's Wait API
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	opts := new(containers.WaitOptions)
@@ -320,7 +323,8 @@ func (c *client) StopContainer(ctx context.Context, containerID string, timeout 
 		"id", containerID,
 		"timeout", timeout)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	opts := new(containers.StopOptions)
@@ -353,7 +357,8 @@ func (c *client) RestartContainer(ctx context.Context, containerID string, timeo
 		"id", containerID,
 		"timeout", timeout)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	opts := new(containers.RestartOptions)
@@ -389,7 +394,8 @@ func (c *client) RemoveContainer(ctx context.Context, containerID string, opts *
 		"force", opts != nil && opts.Force,
 		"volumes", opts != nil && opts.RemoveVolumes)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	removeOpts := new(containers.RemoveOptions)
@@ -418,7 +424,8 @@ func (c *client) RemoveContainer(ctx context.Context, containerID string, opts *
 func (c *client) InspectContainer(ctx context.Context, containerID string) (*ContainerInfo, error) {
 	slog.Debug("inspecting container", "id", containerID)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	data, err := containers.Inspect(timeoutCtx, containerID, nil)
@@ -482,7 +489,8 @@ func (c *client) ListContainers(ctx context.Context, opts *ListOptions) ([]*Cont
 		"all", opts != nil && opts.All,
 		"limit", opts)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	listOpts := new(containers.ListOptions)

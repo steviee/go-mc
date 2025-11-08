@@ -174,7 +174,9 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 
 // Ping tests the connection to the container daemon.
 func (c *client) Ping(ctx context.Context) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Create timeout context based on the connection context (c.conn)
+	// The connection context contains the Podman client that bindings.NewConnection() set up
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	// Use Info as a ping - it's a lightweight operation to test connectivity
@@ -188,7 +190,9 @@ func (c *client) Ping(ctx context.Context) error {
 
 // Info returns daemon information.
 func (c *client) Info(ctx context.Context) (*RuntimeInfo, error) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Create timeout context based on the connection context (c.conn)
+	// The connection context contains the Podman client that bindings.NewConnection() set up
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	info, err := system.Info(timeoutCtx, nil)
