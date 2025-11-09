@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automatic Minecraft version detection in `servers create` (#59)
+  - Auto-fetches latest Minecraft version from Mojang API when version not specified
+  - Uses `minecraft.GetVersionManifest()` for latest release version
+  - Graceful fallback to hardcoded version (1.21.1) if API call fails
+  - Explicit version specifications continue to work as before
+- `servers logs` command for viewing and streaming container logs (#58)
+  - View container logs with `--follow` for real-time streaming
+  - Filter with `--tail` (last N lines), `--since` (timestamp), `--timestamps`
+  - Graceful Ctrl+C handling for follow mode
+  - Automatic detection of Podman/Docker runtime
+  - Essential for debugging server startup issues
+- `servers rm` command for comprehensive server removal (#55)
+  - Remove servers with `servers rm <name>`
+  - Safety features: confirmation prompts, preserve data by default
+  - `--force` flag to skip confirmation
+  - `--volumes` flag to remove data directories
+  - Automatic port cleanup and state removal
+  - Multi-server support: `servers rm server1 server2 server3`
 - Post-installation mod management commands (#49)
   - `mods install <server> <mod-slugs...>` - Install mods on existing servers
   - `mods list <server>` - List installed mods with version and port information
