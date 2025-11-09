@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steviee/go-mc/internal/container"
+	"github.com/steviee/go-mc/internal/minecraft"
 	"github.com/steviee/go-mc/internal/mods"
 	"github.com/steviee/go-mc/internal/state"
 )
@@ -244,9 +245,25 @@ func runCreate(ctx context.Context, stdout, stderr io.Writer, name string, flags
 
 // buildServerConfig builds and validates the server configuration
 func buildServerConfig(ctx context.Context, name string, flags *CreateFlags) (*ServerConfig, error) {
+	version := flags.Version
+
+	// Auto-detect latest Minecraft version if not specified or using default
+	if version == "" || version == defaultMinecraftVersion {
+		slog.Info("fetching latest Minecraft version")
+		mcClient := minecraft.NewClient(nil)
+		manifest, err := mcClient.GetVersionManifest(ctx)
+		if err != nil {
+			slog.Warn("failed to fetch latest Minecraft version, using fallback", "error", err, "fallback", defaultMinecraftVersion)
+			version = defaultMinecraftVersion
+		} else {
+			version = manifest.Latest.Release
+			slog.Info("using latest Minecraft version", "version", version)
+		}
+	}
+
 	config := &ServerConfig{
 		Name:    name,
-		Version: flags.Version,
+		Version: version,
 		Memory:  flags.Memory,
 		Mods:    flags.Mods,
 	}
