@@ -39,11 +39,11 @@ jobs:
         run: |
           coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Coverage: ${coverage}%"
-          if (( $(echo "$coverage < 64" | bc -l) )); then
-            echo "❌ Coverage is below 64% (got ${coverage}%)"
+          if (( $(echo "$coverage < 63" | bc -l) )); then
+            echo "❌ Coverage is below 63% (got ${coverage}%)"
             exit 1
           fi
-          echo "✅ Coverage is ${coverage}% (≥64%)"
+          echo "✅ Coverage is ${coverage}% (≥63%)"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

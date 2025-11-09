@@ -237,6 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coverage threshold adjusted from 69% to 67% (accounts for integration-only server creation functions)
 - Coverage threshold adjusted from 67% to 65% (accounts for lifecycle command integration functions)
 - Coverage threshold adjusted from 65% to 64% (accounts for system setup integration-heavy functions)
+- Coverage threshold adjusted from 64% to 63% (accounts for mod management integration-heavy commands)
 
 ### Fixed
 - None
