@@ -181,18 +181,19 @@ func TestNewClient_ExplicitSocket_NotFound(t *testing.T) {
 
 // MockClient is a mock implementation of the Client interface for testing.
 type MockClient struct {
-	PingFunc             func(ctx context.Context) error
-	InfoFunc             func(ctx context.Context) (*RuntimeInfo, error)
-	CloseFunc            func() error
-	RuntimeFunc          func() string
-	CreateContainerFunc  func(ctx context.Context, config *ContainerConfig) (string, error)
-	StartContainerFunc   func(ctx context.Context, containerID string) error
-	WaitForContainerFunc func(ctx context.Context, containerID string, condition string) error
-	StopContainerFunc    func(ctx context.Context, containerID string, timeout *time.Duration) error
-	RestartContainerFunc func(ctx context.Context, containerID string, timeout *time.Duration) error
-	RemoveContainerFunc  func(ctx context.Context, containerID string, opts *RemoveOptions) error
-	InspectContainerFunc func(ctx context.Context, containerID string) (*ContainerInfo, error)
-	ListContainersFunc   func(ctx context.Context, opts *ListOptions) ([]*ContainerInfo, error)
+	PingFunc              func(ctx context.Context) error
+	InfoFunc              func(ctx context.Context) (*RuntimeInfo, error)
+	CloseFunc             func() error
+	RuntimeFunc           func() string
+	CreateContainerFunc   func(ctx context.Context, config *ContainerConfig) (string, error)
+	StartContainerFunc    func(ctx context.Context, containerID string) error
+	WaitForContainerFunc  func(ctx context.Context, containerID string, condition string) error
+	StopContainerFunc     func(ctx context.Context, containerID string, timeout *time.Duration) error
+	RestartContainerFunc  func(ctx context.Context, containerID string, timeout *time.Duration) error
+	RemoveContainerFunc   func(ctx context.Context, containerID string, opts *RemoveOptions) error
+	InspectContainerFunc  func(ctx context.Context, containerID string) (*ContainerInfo, error)
+	ListContainersFunc    func(ctx context.Context, opts *ListOptions) ([]*ContainerInfo, error)
+	GetContainerStatsFunc func(ctx context.Context, containerID string) (*ContainerStats, error)
 }
 
 func (m *MockClient) Ping(ctx context.Context) error {
@@ -304,6 +305,18 @@ func (m *MockClient) ListContainers(ctx context.Context, opts *ListOptions) ([]*
 			Created: time.Now(),
 			Labels:  map[string]string{},
 		},
+	}, nil
+}
+
+func (m *MockClient) GetContainerStats(ctx context.Context, containerID string) (*ContainerStats, error) {
+	if m.GetContainerStatsFunc != nil {
+		return m.GetContainerStatsFunc(ctx, containerID)
+	}
+	return &ContainerStats{
+		CPUPercent:    25.5,
+		MemoryUsed:    1073741824, // 1GB
+		MemoryLimit:   2147483648, // 2GB
+		MemoryPercent: 50.0,
 	}, nil
 }
 

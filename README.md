@@ -364,25 +364,37 @@ LOADER VERSION  BUILD  STABLE
 Interactive TUI dashboard with real-time monitoring (like `htop` or `lazydocker`).
 
 **Features:**
-- Real-time metrics (CPU, memory, players, TPS)
-- Color-coded status indicators
-- Sortable columns
+- Real-time CPU and memory usage metrics for running servers
+- RCON port visibility
+- Installed mod count
+- Fabric loader version display
+- Color-coded status indicators (running, stopped, created, etc.)
+- Auto-refresh every second
 - Quick actions via hotkeys
-- Auto-refresh (configurable)
-- Resource graphs
+
+**Dashboard Columns:**
+```
+NAME     - Server name
+STATUS   - Server status (● running, ○ stopped, etc.)
+VERSION  - Minecraft version
+PORT     - Game port
+RCON     - RCON port for remote administration
+CPU%     - CPU usage percentage (running servers only)
+MEM%     - Memory usage percentage (running servers only)
+MODS     - Count of installed mods
+MEMORY   - Memory usage/limit (e.g., "1.4G/2G")
+UPTIME   - Server uptime (e.g., "2h 15m")
+```
 
 **Keyboard Shortcuts:**
 ```
 ↑/↓           Navigate servers
-Enter         Show server details
 s             Start selected server
 x             Stop selected server
 r             Restart selected server
 l             View logs
 d             Delete server (with confirmation)
-u             Update server
 q/Ctrl+C      Quit
-?             Show help
 ```
 
 #### `servers start <name...>`

@@ -9,6 +9,21 @@ import (
 	"github.com/steviee/go-mc/internal/container"
 )
 
+// PortInfo represents a network port used by the server
+type PortInfo struct {
+	Number   int    // Port number
+	Protocol string // "tcp" or "udp"
+	Service  string // "Game", "RCON", "Voice Chat", etc.
+	Source   string // "config", "detected", "mod"
+}
+
+// ModInfo represents basic mod information for display
+type ModInfo struct {
+	Name    string
+	Slug    string
+	Version string
+}
+
 // ServerInfo represents a server in the TUI
 type ServerInfo struct {
 	Name        string
@@ -19,6 +34,20 @@ type ServerInfo struct {
 	MemoryTotal string
 	Uptime      string
 	StartedAt   time.Time
+	// Fabric and RCON information
+	FabricVersion string // Fabric loader version
+	RCONPort      int    // RCON port
+	// Resource usage metrics
+	CPUPercent       float64 // CPU usage percentage (0-100)
+	MemoryUsedBytes  int64   // Actual memory used in bytes
+	MemoryLimitBytes int64   // Memory limit in bytes
+	MemoryPercent    float64 // Memory usage percentage (0-100)
+	// Player information (for future use)
+	PlayerCount int // Current player count
+	PlayerMax   int // Maximum players
+	// Mod and port information
+	InstalledMods []ModInfo  // List of installed mods
+	Ports         []PortInfo // List of network ports
 }
 
 // Model is the bubbletea model for the TUI dashboard

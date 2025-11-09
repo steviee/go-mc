@@ -11,6 +11,7 @@ import (
 	nettypes "github.com/containers/common/libnetwork/types"
 	"github.com/containers/podman/v5/libpod/define"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
+	"github.com/containers/podman/v5/pkg/domain/entities"
 	"github.com/containers/podman/v5/pkg/specgen"
 	"github.com/docker/go-units"
 	spec "github.com/opencontainers/runtime-spec/specs-go"
@@ -592,4 +593,85 @@ func parsePortMapping(mapping string) (hostPort, containerPort int, err error) {
 	default:
 		return 0, 0, fmt.Errorf("invalid port mapping format: %s", mapping)
 	}
+}
+
+// GetContainerStats gets current CPU and memory statistics for a container.
+//
+// Returns statistics including:
+//   - CPU usage percentage (0-100)
+//   - Memory used and limit in bytes
+//   - Memory usage percentage (0-100)
+//
+// Returns an error if:
+//   - Container does not exist
+//   - Container is not running
+//   - Stats are not available
+func (c *client) GetContainerStats(ctx context.Context, containerID string) (*ContainerStats, error) {
+	slog.Debug("getting container stats", "id", containerID)
+
+	// First verify container exists and is running
+	info, err := c.InspectContainer(ctx, containerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if info.State != "running" {
+		return nil, fmt.Errorf("container is not running: %s (state: %s)", containerID, info.State)
+	}
+
+	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
+	defer cancel()
+
+	// Set up stats options (one-time stats, not streaming)
+	opts := new(containers.StatsOptions)
+	stream := false
+	opts.Stream = &stream
+
+	// Call Stats API - returns a channel that will receive one report
+	statsChan, err := containers.Stats(timeoutCtx, []string{containerID}, opts)
+	if err != nil {
+		if strings.Contains(err.Error(), "no such container") {
+			return nil, fmt.Errorf("%w: %s", ErrContainerNotFound, containerID)
+		}
+		return nil, fmt.Errorf("failed to get container stats: %w", err)
+	}
+
+	// Read one stats report from the channel
+	var report entities.ContainerStatsReport
+	select {
+	case report = <-statsChan:
+		// Got stats report
+		if report.Error != nil {
+			return nil, fmt.Errorf("stats error for container %s: %w", containerID, report.Error)
+		}
+	case <-timeoutCtx.Done():
+		return nil, fmt.Errorf("timeout waiting for container stats: %w", timeoutCtx.Err())
+	}
+
+	// Verify we got stats
+	if len(report.Stats) == 0 {
+		return nil, fmt.Errorf("no stats available for container %s", containerID)
+	}
+
+	// Get the first (and only) container stats
+	containerStats := report.Stats[0]
+
+	// Build stats response
+	// CPU and Memory percentages are already calculated by Podman
+	stats := &ContainerStats{
+		CPUPercent:    containerStats.CPU,
+		MemoryUsed:    int64(containerStats.MemUsage),
+		MemoryLimit:   int64(containerStats.MemLimit),
+		MemoryPercent: containerStats.MemPerc,
+	}
+
+	slog.Debug("container stats retrieved",
+		"id", containerID,
+		"cpu_percent", stats.CPUPercent,
+		"mem_used", stats.MemoryUsed,
+		"mem_limit", stats.MemoryLimit,
+		"mem_percent", stats.MemoryPercent)
+
+	return stats, nil
 }
