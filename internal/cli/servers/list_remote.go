@@ -13,8 +13,10 @@ import (
 
 // ListRemoteFlags holds all flags for the list-remote command
 type ListRemoteFlags struct {
-	Type  string
-	Limit int
+	Type    string
+	Limit   int
+	Loaders bool
+	Version string
 }
 
 // ListRemoteOutput holds the output for JSON mode
@@ -32,19 +34,28 @@ type RemoteVersionItem struct {
 	ReleaseTime string `json:"releaseTime"`
 }
 
+// FabricLoaderItem represents a Fabric loader in the output
+type FabricLoaderItem struct {
+	Version string `json:"version"`
+	Build   int    `json:"build"`
+	Stable  bool   `json:"stable"`
+}
+
 // NewListRemoteCommand creates the servers list-remote subcommand
 func NewListRemoteCommand() *cobra.Command {
 	flags := &ListRemoteFlags{}
 
 	cmd := &cobra.Command{
 		Use:   "list-remote",
-		Short: "List available Minecraft versions from Mojang",
-		Long: `List available Minecraft Java Edition versions from Mojang's official version manifest.
+		Short: "List available Minecraft versions or Fabric loaders",
+		Long: `List available Minecraft Java Edition versions from Mojang's official version manifest,
+or Fabric loader versions from Fabric Meta API.
 
-By default, only release versions are shown. Use --type to filter by release, snapshot, or show all versions.
+By default, only Minecraft release versions are shown. Use --type to filter by release, snapshot, or show all versions.
+Use --loaders to show Fabric loader versions instead of Minecraft versions.
 
-This command helps you discover which Minecraft versions are available before creating a server.`,
-		Example: `  # List latest 20 releases
+This command helps you discover which Minecraft versions and Fabric loaders are available before creating a server.`,
+		Example: `  # List latest 20 Minecraft releases
   go-mc servers list-remote
 
   # List all snapshots
@@ -52,6 +63,15 @@ This command helps you discover which Minecraft versions are available before cr
 
   # List all versions (releases and snapshots)
   go-mc servers list-remote --type all --limit 100
+
+  # List all Fabric loader versions
+  go-mc servers list-remote --loaders
+
+  # List Fabric loaders for specific Minecraft version
+  go-mc servers list-remote --loaders --version 1.21.1
+
+  # List latest 10 Fabric loaders
+  go-mc servers list-remote --loaders --limit 10
 
   # JSON output for scripting
   go-mc servers list-remote --json
@@ -67,6 +87,8 @@ This command helps you discover which Minecraft versions are available before cr
 	// Add flags
 	cmd.Flags().StringVar(&flags.Type, "type", "release", "Filter by type: release, snapshot, all")
 	cmd.Flags().IntVar(&flags.Limit, "limit", 20, "Limit number of results (0 for unlimited)")
+	cmd.Flags().BoolVar(&flags.Loaders, "loaders", false, "Show Fabric loader versions instead of Minecraft versions")
+	cmd.Flags().StringVar(&flags.Version, "version", "", "Filter by Minecraft version (requires --loaders)")
 
 	return cmd
 }
@@ -75,7 +97,17 @@ This command helps you discover which Minecraft versions are available before cr
 func runListRemote(ctx context.Context, stdout io.Writer, flags *ListRemoteFlags) error {
 	jsonMode := isJSONMode()
 
-	// Validate type flag
+	// Validate flags
+	if flags.Version != "" && !flags.Loaders {
+		return outputListRemoteError(stdout, jsonMode, fmt.Errorf("--version flag requires --loaders flag"))
+	}
+
+	// If loaders mode, delegate to runListRemoteLoaders
+	if flags.Loaders {
+		return runListRemoteLoaders(ctx, stdout, flags)
+	}
+
+	// Validate type flag for Minecraft versions
 	if flags.Type != "release" && flags.Type != "snapshot" && flags.Type != "all" {
 		return outputListRemoteError(stdout, jsonMode, fmt.Errorf("invalid type %q: must be release, snapshot, or all", flags.Type))
 	}
@@ -198,4 +230,130 @@ func formatReleaseDate(releaseTime string) string {
 
 	// Format as YYYY-MM-DD
 	return t.Format("2006-01-02")
+}
+
+// runListRemoteLoaders executes the list-remote command in loaders mode
+func runListRemoteLoaders(ctx context.Context, stdout io.Writer, flags *ListRemoteFlags) error {
+	jsonMode := isJSONMode()
+
+	// Create Minecraft API client
+	client := minecraft.NewClient(nil)
+
+	var loaders []minecraft.FabricLoader
+	var err error
+
+	// Fetch loaders based on whether version is specified
+	if flags.Version != "" {
+		loaders, err = client.GetFabricLoadersForVersion(ctx, flags.Version)
+		if err != nil {
+			return outputListRemoteError(stdout, jsonMode, fmt.Errorf("failed to fetch Fabric loaders for version %s: %w", flags.Version, err))
+		}
+	} else {
+		loaders, err = client.GetFabricLoaders(ctx)
+		if err != nil {
+			return outputListRemoteError(stdout, jsonMode, fmt.Errorf("failed to fetch Fabric loaders: %w", err))
+		}
+	}
+
+	// Apply limit if set
+	if flags.Limit > 0 && len(loaders) > flags.Limit {
+		loaders = loaders[:flags.Limit]
+	}
+
+	// Convert to output format
+	items := make([]FabricLoaderItem, len(loaders))
+	for i, loader := range loaders {
+		items[i] = FabricLoaderItem{
+			Version: loader.Version,
+			Build:   loader.Build,
+			Stable:  loader.Stable,
+		}
+	}
+
+	// Output results
+	if jsonMode {
+		return outputFabricLoadersJSON(stdout, items, flags.Version)
+	}
+
+	return outputFabricLoadersTable(stdout, items, flags.Version)
+}
+
+// outputFabricLoadersTable outputs Fabric loaders in table format
+func outputFabricLoadersTable(stdout io.Writer, items []FabricLoaderItem, minecraftVersion string) error {
+	// Print Minecraft version if specified
+	if minecraftVersion != "" {
+		_, _ = fmt.Fprintf(stdout, "MINECRAFT VERSION: %s\n\n", minecraftVersion)
+	}
+
+	// Calculate column widths
+	versionWidth := len("LOADER VERSION")
+	buildWidth := len("BUILD")
+	stableWidth := len("STABLE")
+
+	for _, item := range items {
+		if len(item.Version) > versionWidth {
+			versionWidth = len(item.Version)
+		}
+		buildStr := fmt.Sprintf("%d", item.Build)
+		if len(buildStr) > buildWidth {
+			buildWidth = len(buildStr)
+		}
+	}
+
+	// Print header
+	_, _ = fmt.Fprintf(stdout, "%-*s  %*s  %*s\n",
+		versionWidth, "LOADER VERSION",
+		buildWidth, "BUILD",
+		stableWidth, "STABLE",
+	)
+
+	// Print rows
+	for _, item := range items {
+		stable := "no"
+		if item.Stable {
+			stable = "yes"
+		}
+		_, _ = fmt.Fprintf(stdout, "%-*s  %*d  %*s\n",
+			versionWidth, item.Version,
+			buildWidth, item.Build,
+			stableWidth, stable,
+		)
+	}
+
+	return nil
+}
+
+// outputFabricLoadersJSON outputs Fabric loaders in JSON format
+func outputFabricLoadersJSON(stdout io.Writer, items []FabricLoaderItem, minecraftVersion string) error {
+	// Find latest stable loader
+	latestStable := ""
+	for _, item := range items {
+		if item.Stable {
+			latestStable = item.Version
+			break
+		}
+	}
+
+	// Build data map
+	data := map[string]interface{}{
+		"loaders":       items,
+		"latest_stable": latestStable,
+		"count":         len(items),
+	}
+
+	// Add minecraft_version if specified
+	if minecraftVersion != "" {
+		data["minecraft_version"] = minecraftVersion
+	} else {
+		data["minecraft_version"] = nil
+	}
+
+	output := ListRemoteOutput{
+		Status: "success",
+		Data:   data,
+	}
+
+	enc := json.NewEncoder(stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(output)
 }
