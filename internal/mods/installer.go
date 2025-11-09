@@ -164,7 +164,7 @@ func (i *Installer) installSingleMod(ctx context.Context, serverState *state.Ser
 
 	// Download file
 	destPath := filepath.Join(modsDir, file.Filename)
-	if err := i.downloadFile(ctx, file.URL, destPath); err != nil {
+	if err := i.DownloadFile(ctx, file.URL, destPath); err != nil {
 		// Release port if we allocated one
 		if allocatedPort > 0 {
 			_ = state.ReleasePort(ctx, allocatedPort)
@@ -191,9 +191,10 @@ func (i *Installer) installSingleMod(ctx context.Context, serverState *state.Ser
 	return modInfo, nil
 }
 
-// downloadFile downloads a file from URL to destination path.
+// DownloadFile downloads a file from URL to destination path.
 // It uses an HTTP GET request with context support for cancellation.
-func (i *Installer) downloadFile(ctx context.Context, url, destPath string) error {
+// This method is exported for use by the update command.
+func (i *Installer) DownloadFile(ctx context.Context, url, destPath string) error {
 	// Create HTTP request
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -245,13 +246,19 @@ func (i *Installer) isModInstalled(serverState *state.ServerState, slug string) 
 }
 
 // getModsDir returns the mods directory path for a server.
-// The mods directory is located at <data_volume>/mods.
+// The mods directory is located parallel to the data volume, not inside it.
+// For example: ~/.local/share/go-mc/servers/myserver/mods
 func getModsDir(serverState *state.ServerState) (string, error) {
 	if serverState.Volumes.Data == "" {
 		return "", fmt.Errorf("server data volume not configured")
 	}
 
-	return filepath.Join(serverState.Volumes.Data, "mods"), nil
+	// Get the parent directory of the data volume
+	// e.g., /home/mc/.local/share/go-mc/servers/myserver/data -> /home/mc/.local/share/go-mc/servers/myserver
+	serverDir := filepath.Dir(serverState.Volumes.Data)
+	modsDir := filepath.Join(serverDir, "mods")
+
+	return modsDir, nil
 }
 
 // EnsureFabricAPI ensures Fabric API is installed on the server.

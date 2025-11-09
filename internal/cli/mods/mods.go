@@ -39,11 +39,10 @@ on the server's Minecraft and Fabric versions.`,
 
 	// Add subcommands
 	cmd.AddCommand(NewSearchCommand())
-	// Future subcommands:
-	// cmd.AddCommand(NewInstallCommand())
-	// cmd.AddCommand(NewListCommand())
-	// cmd.AddCommand(NewUpdateCommand())
-	// cmd.AddCommand(NewRemoveCommand())
+	cmd.AddCommand(NewInstallCommand())
+	cmd.AddCommand(NewListCommand())
+	cmd.AddCommand(NewRemoveCommand())
+	cmd.AddCommand(NewUpdateCommand())
 
 	return cmd
 }
