@@ -260,7 +260,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coverage threshold adjusted from 61% to 60% (minor decrease from logging changes)
 
 ### Fixed
-- None
+- Orphaned server registrations causing creation failures (#63)
+  - Auto-detect orphaned servers (registered in global state but missing state file)
+  - Automatically clean up orphaned registrations before server creation
+  - Eliminates "server already registered" errors from failed previous creations
+  - No manual state file editing required to recover from failed creation
 
 ## [0.1.0] - 2025-01-20
 
