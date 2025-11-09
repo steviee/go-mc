@@ -40,7 +40,7 @@ func NewClient(ctx context.Context, cfg *Config) (Client, error) {
 		cfg.Timeout = 30 * time.Second
 	}
 
-	slog.Info("initializing container client",
+	slog.Debug("initializing container client",
 		"runtime", cfg.Runtime,
 		"socket", cfg.SocketPath,
 		"timeout", cfg.Timeout)
@@ -70,7 +70,7 @@ func autoDetectRuntime(ctx context.Context, timeout time.Duration) (Client, erro
 	// Try Podman first (preferred)
 	client, err := detectPodmanSocket(ctx, timeout)
 	if err == nil {
-		slog.Info("detected Podman runtime")
+		slog.Debug("detected Podman runtime")
 		return client, nil
 	}
 
@@ -79,7 +79,7 @@ func autoDetectRuntime(ctx context.Context, timeout time.Duration) (Client, erro
 	// Try Docker as fallback
 	client, err = detectDockerSocket(ctx, timeout)
 	if err == nil {
-		slog.Info("detected Docker runtime")
+		slog.Debug("detected Docker runtime")
 		return client, nil
 	}
 
@@ -165,7 +165,7 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 		return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("connection test failed: %w", err))
 	}
 
-	slog.Info("connected to container runtime",
+	slog.Debug("connected to container runtime",
 		"runtime", runtime,
 		"socket", socketPath)
 

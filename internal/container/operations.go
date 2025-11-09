@@ -57,7 +57,7 @@ func (c *client) CreateContainer(ctx context.Context, config *ContainerConfig) (
 		return "", fmt.Errorf("failed to create container: %w", err)
 	}
 
-	slog.Info("container created",
+	slog.Debug("container created",
 		"id", response.ID,
 		"name", config.Name)
 
@@ -235,7 +235,7 @@ func (c *client) StartContainer(ctx context.Context, containerID string) error {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 
-	slog.Info("container started", "id", containerID)
+	slog.Debug("container started", "id", containerID)
 	return nil
 }
 
@@ -352,7 +352,7 @@ func (c *client) StopContainer(ctx context.Context, containerID string, timeout 
 		return fmt.Errorf("failed to stop container: %w", err)
 	}
 
-	slog.Info("container stopped", "id", containerID)
+	slog.Debug("container stopped", "id", containerID)
 	return nil
 }
 
@@ -397,7 +397,7 @@ func (c *client) RestartContainer(ctx context.Context, containerID string, timeo
 		return fmt.Errorf("failed to restart container: %w", err)
 	}
 
-	slog.Info("container restarted", "id", containerID)
+	slog.Debug("container restarted", "id", containerID)
 	return nil
 }
 
@@ -435,7 +435,7 @@ func (c *client) RemoveContainer(ctx context.Context, containerID string, opts *
 		return fmt.Errorf("failed to remove container: %w", err)
 	}
 
-	slog.Info("container removed", "id", containerID)
+	slog.Debug("container removed", "id", containerID)
 	return nil
 }
 
