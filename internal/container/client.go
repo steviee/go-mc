@@ -130,10 +130,6 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 		return nil, NewRuntimeError(runtime, socketPath, ErrSocketNotFound)
 	}
 
-	// Create connection context with timeout
-	connCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
 	// Connect to Podman API
 	// The socket path needs to be in the format: unix:///path/to/socket
 	// Note: We skip pre-connection permission checks because:
@@ -141,7 +137,7 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 	// 2. Pre-checking triggers socket activation, then closes the connection
 	// 3. This causes the service to shut down before we can connect again
 	socketURI := fmt.Sprintf("unix://%s", socketPath)
-	conn, err := bindings.NewConnection(connCtx, socketURI)
+	conn, err := bindings.NewConnection(ctx, socketURI)
 	if err != nil {
 		// Check if it's a connection timeout or daemon not running
 		if os.IsTimeout(err) || strings.Contains(err.Error(), "connection refused") {
@@ -162,8 +158,10 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 		timeout:    timeout,
 	}
 
-	// Test connection with ping
-	if err := c.Ping(ctx); err != nil {
+	// Test connection with ping (use a timeout context for the ping)
+	pingCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	if err := c.Ping(pingCtx); err != nil {
 		return nil, NewRuntimeError(runtime, socketPath, fmt.Errorf("connection test failed: %w", err))
 	}
 
@@ -176,7 +174,9 @@ func connectToSocket(ctx context.Context, runtime, socketPath string, timeout ti
 
 // Ping tests the connection to the container daemon.
 func (c *client) Ping(ctx context.Context) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Create timeout context based on the connection context (c.conn)
+	// The connection context contains the Podman client that bindings.NewConnection() set up
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	// Use Info as a ping - it's a lightweight operation to test connectivity
@@ -190,7 +190,9 @@ func (c *client) Ping(ctx context.Context) error {
 
 // Info returns daemon information.
 func (c *client) Info(ctx context.Context) (*RuntimeInfo, error) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// Create timeout context based on the connection context (c.conn)
+	// The connection context contains the Podman client that bindings.NewConnection() set up
+	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
 	defer cancel()
 
 	info, err := system.Info(timeoutCtx, nil)
