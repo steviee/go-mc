@@ -61,8 +61,22 @@ func (m Model) renderHeader() string {
 		spacing = 1
 	}
 
+	// Build header with box drawing
+	var b strings.Builder
+	b.WriteString("╭")
+	b.WriteString(strings.Repeat("─", totalWidth-2))
+	b.WriteString("╮\n")
+
 	headerText := fmt.Sprintf(" %s%s%s ", title, strings.Repeat(" ", spacing), lastUpdate)
-	return headerStyle.Render(headerText)
+	b.WriteString("│")
+	b.WriteString(headerStyle.Render(headerText))
+	b.WriteString("│\n")
+
+	b.WriteString("╰")
+	b.WriteString(strings.Repeat("─", totalWidth-2))
+	b.WriteString("╯")
+
+	return b.String()
 }
 
 // renderTable renders the server list table
@@ -252,4 +266,36 @@ func formatMemoryPercent(server ServerInfo) string {
 		return "-"
 	}
 	return fmt.Sprintf("%.1f%%", server.MemoryPercent)
+}
+
+// formatCPUSparkline formats CPU usage as a sparkline
+func formatCPUSparkline(server ServerInfo, width int) string {
+	if server.Status != "running" || server.Metrics == nil || len(server.Metrics.CPUHistory) == 0 {
+		return strings.Repeat("▁", width)
+	}
+	return renderSparklineWithColor(server.Metrics.CPUHistory, width)
+}
+
+// formatMemSparkline formats memory usage as a sparkline
+func formatMemSparkline(server ServerInfo, width int) string {
+	if server.Status != "running" || server.Metrics == nil || len(server.Metrics.MemoryHistory) == 0 {
+		return strings.Repeat("▁", width)
+	}
+	return renderSparklineWithColor(server.Metrics.MemoryHistory, width)
+}
+
+// formatCPUBar formats CPU usage as a progress bar
+func formatCPUBar(server ServerInfo) string {
+	if server.Status != "running" {
+		return " - "
+	}
+	return renderProgressBarWithPercentage(server.CPUPercent, 6)
+}
+
+// formatMemBar formats memory usage as a progress bar
+func formatMemBar(server ServerInfo) string {
+	if server.Status != "running" {
+		return " - "
+	}
+	return renderProgressBarWithPercentage(server.MemoryPercent, 6)
 }
