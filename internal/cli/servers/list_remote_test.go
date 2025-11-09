@@ -323,3 +323,278 @@ func TestRunListRemote_ValidTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestOutputFabricLoadersTable(t *testing.T) {
+	tests := []struct {
+		name             string
+		items            []FabricLoaderItem
+		minecraftVersion string
+		wantContains     []string
+	}{
+		{
+			name: "multiple loaders with minecraft version",
+			items: []FabricLoaderItem{
+				{Version: "0.16.9", Build: 301, Stable: true},
+				{Version: "0.16.8", Build: 300, Stable: true},
+				{Version: "0.16.7", Build: 299, Stable: false},
+			},
+			minecraftVersion: "1.21.1",
+			wantContains: []string{
+				"MINECRAFT VERSION: 1.21.1",
+				"LOADER VERSION",
+				"BUILD",
+				"STABLE",
+				"0.16.9",
+				"0.16.8",
+				"0.16.7",
+				"301",
+				"300",
+				"299",
+				"yes",
+				"no",
+			},
+		},
+		{
+			name: "multiple loaders without minecraft version",
+			items: []FabricLoaderItem{
+				{Version: "0.16.9", Build: 301, Stable: true},
+				{Version: "0.16.8", Build: 300, Stable: true},
+			},
+			minecraftVersion: "",
+			wantContains: []string{
+				"LOADER VERSION",
+				"BUILD",
+				"STABLE",
+				"0.16.9",
+				"0.16.8",
+				"301",
+				"300",
+				"yes",
+			},
+		},
+		{
+			name:             "empty results",
+			items:            []FabricLoaderItem{},
+			minecraftVersion: "",
+			wantContains: []string{
+				"LOADER VERSION",
+				"BUILD",
+				"STABLE",
+			},
+		},
+		{
+			name: "single loader",
+			items: []FabricLoaderItem{
+				{Version: "0.16.9", Build: 301, Stable: true},
+			},
+			minecraftVersion: "1.20.4",
+			wantContains: []string{
+				"MINECRAFT VERSION: 1.20.4",
+				"0.16.9",
+				"301",
+				"yes",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := outputFabricLoadersTable(&buf, tt.items, tt.minecraftVersion)
+
+			require.NoError(t, err)
+
+			output := buf.String()
+			for _, want := range tt.wantContains {
+				assert.Contains(t, output, want, "output should contain %q", want)
+			}
+
+			// Verify table structure
+			lines := strings.Split(strings.TrimSpace(output), "\n")
+			if tt.minecraftVersion != "" {
+				// Should have: minecraft version line, empty line, header, rows
+				assert.GreaterOrEqual(t, len(lines), 3+len(tt.items))
+			} else {
+				// Should have: header, rows
+				assert.GreaterOrEqual(t, len(lines), 1+len(tt.items))
+			}
+
+			// Verify "yes"/"no" formatting for stable field
+			if len(tt.items) > 0 {
+				for _, item := range tt.items {
+					if item.Stable {
+						assert.Contains(t, output, "yes")
+					} else {
+						assert.Contains(t, output, "no")
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestOutputFabricLoadersJSON(t *testing.T) {
+	tests := []struct {
+		name             string
+		items            []FabricLoaderItem
+		minecraftVersion string
+		validateJSON     func(*testing.T, ListRemoteOutput)
+	}{
+		{
+			name: "multiple loaders with minecraft version",
+			items: []FabricLoaderItem{
+				{Version: "0.16.9", Build: 301, Stable: true},
+				{Version: "0.16.8", Build: 300, Stable: true},
+				{Version: "0.16.7", Build: 299, Stable: false},
+			},
+			minecraftVersion: "1.21.1",
+			validateJSON: func(t *testing.T, output ListRemoteOutput) {
+				assert.Equal(t, "success", output.Status)
+				assert.NotNil(t, output.Data)
+
+				// Check minecraft_version
+				mcVersion, ok := output.Data["minecraft_version"].(string)
+				require.True(t, ok)
+				assert.Equal(t, "1.21.1", mcVersion)
+
+				// Check loaders array
+				loaders, ok := output.Data["loaders"].([]interface{})
+				require.True(t, ok)
+				assert.Len(t, loaders, 3)
+
+				// Check latest_stable
+				latestStable, ok := output.Data["latest_stable"].(string)
+				require.True(t, ok)
+				assert.Equal(t, "0.16.9", latestStable)
+
+				// Check count
+				count, ok := output.Data["count"].(float64)
+				require.True(t, ok)
+				assert.Equal(t, float64(3), count)
+			},
+		},
+		{
+			name: "multiple loaders without minecraft version",
+			items: []FabricLoaderItem{
+				{Version: "0.16.9", Build: 301, Stable: true},
+				{Version: "0.16.8", Build: 300, Stable: false},
+			},
+			minecraftVersion: "",
+			validateJSON: func(t *testing.T, output ListRemoteOutput) {
+				assert.Equal(t, "success", output.Status)
+				assert.NotNil(t, output.Data)
+
+				// Check minecraft_version is null
+				mcVersion := output.Data["minecraft_version"]
+				assert.Nil(t, mcVersion)
+
+				// Check loaders array
+				loaders, ok := output.Data["loaders"].([]interface{})
+				require.True(t, ok)
+				assert.Len(t, loaders, 2)
+
+				// Check latest_stable
+				latestStable, ok := output.Data["latest_stable"].(string)
+				require.True(t, ok)
+				assert.Equal(t, "0.16.9", latestStable)
+
+				// Check count
+				count, ok := output.Data["count"].(float64)
+				require.True(t, ok)
+				assert.Equal(t, float64(2), count)
+			},
+		},
+		{
+			name:             "empty results",
+			items:            []FabricLoaderItem{},
+			minecraftVersion: "",
+			validateJSON: func(t *testing.T, output ListRemoteOutput) {
+				assert.Equal(t, "success", output.Status)
+				assert.NotNil(t, output.Data)
+
+				// Check count
+				count, ok := output.Data["count"].(float64)
+				require.True(t, ok)
+				assert.Equal(t, float64(0), count)
+
+				// Check loaders array
+				loaders, ok := output.Data["loaders"].([]interface{})
+				require.True(t, ok)
+				assert.Empty(t, loaders)
+
+				// Check latest_stable is empty
+				latestStable, ok := output.Data["latest_stable"].(string)
+				require.True(t, ok)
+				assert.Equal(t, "", latestStable)
+			},
+		},
+		{
+			name: "no stable loaders",
+			items: []FabricLoaderItem{
+				{Version: "0.16.7", Build: 299, Stable: false},
+				{Version: "0.16.6", Build: 298, Stable: false},
+			},
+			minecraftVersion: "1.20.4",
+			validateJSON: func(t *testing.T, output ListRemoteOutput) {
+				assert.Equal(t, "success", output.Status)
+
+				// Check latest_stable is empty when no stable loaders
+				latestStable, ok := output.Data["latest_stable"].(string)
+				require.True(t, ok)
+				assert.Equal(t, "", latestStable)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := outputFabricLoadersJSON(&buf, tt.items, tt.minecraftVersion)
+
+			require.NoError(t, err)
+
+			// Parse JSON output
+			var output ListRemoteOutput
+			err = json.Unmarshal(buf.Bytes(), &output)
+			require.NoError(t, err)
+
+			// Validate JSON structure
+			if tt.validateJSON != nil {
+				tt.validateJSON(t, output)
+			}
+		})
+	}
+}
+
+func TestRunListRemote_VersionWithoutLoaders(t *testing.T) {
+	var buf bytes.Buffer
+	flags := &ListRemoteFlags{
+		Type:    "release",
+		Limit:   20,
+		Loaders: false,
+		Version: "1.21.1",
+	}
+
+	err := runListRemote(context.Background(), &buf, flags)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--version flag requires --loaders flag")
+}
+
+func TestNewListRemoteCommand_LoadersFlags(t *testing.T) {
+	cmd := NewListRemoteCommand()
+
+	require.NotNil(t, cmd)
+
+	// Check --loaders flag exists with correct default
+	loadersFlag := cmd.Flags().Lookup("loaders")
+	require.NotNil(t, loadersFlag)
+	assert.Equal(t, "false", loadersFlag.DefValue)
+	assert.Equal(t, "bool", loadersFlag.Value.Type())
+
+	// Check --version flag exists with correct default
+	versionFlag := cmd.Flags().Lookup("version")
+	require.NotNil(t, versionFlag)
+	assert.Equal(t, "", versionFlag.DefValue)
+	assert.Equal(t, "string", versionFlag.Value.Type())
+}

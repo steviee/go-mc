@@ -252,15 +252,17 @@ modded        stopped     1.19.4    -         -           -      -         25567
 
 #### `servers list-remote` (aliases: `versions`, `list-versions`)
 
-List available Minecraft Java Edition versions from Mojang's official version manifest API.
+List available Minecraft Java Edition versions from Mojang's official version manifest API, or Fabric loader versions from Fabric Meta API.
 
 **Flags:**
 ```
 --type <type>      Filter by type: release, snapshot, all (default: release)
 --limit <n>        Limit number of results (default: 20, 0 for unlimited)
+--loaders          Show Fabric loader versions instead of Minecraft versions
+--version <ver>    Filter by Minecraft version (requires --loaders)
 ```
 
-**Examples:**
+**Examples (Minecraft versions):**
 ```bash
 # List latest 20 releases
 go-mc servers list-remote
@@ -278,7 +280,22 @@ go-mc servers list-remote --json
 go-mc servers list-remote --limit 5
 ```
 
-**Output (table):**
+**Examples (Fabric loaders):**
+```bash
+# List all available Fabric loader versions
+go-mc servers list-remote --loaders
+
+# List Fabric loaders for specific Minecraft version
+go-mc servers list-remote --loaders --version 1.21.1
+
+# List latest 10 Fabric loaders
+go-mc servers list-remote --loaders --limit 10
+
+# JSON output for Fabric loaders
+go-mc servers list-remote --loaders --json
+```
+
+**Output (Minecraft versions - table):**
 ```
 Latest Release:  1.21.10
 Latest Snapshot: 25w45a
@@ -290,7 +307,7 @@ VERSION   TYPE       RELEASED
 25w45a    snapshot   2025-11-04
 ```
 
-**Output (JSON):**
+**Output (Minecraft versions - JSON):**
 ```json
 {
   "status": "success",
@@ -308,6 +325,36 @@ VERSION   TYPE       RELEASED
     ],
     "count": 20,
     "total": 1247
+  }
+}
+```
+
+**Output (Fabric loaders - table):**
+```
+MINECRAFT VERSION: 1.21.1
+
+LOADER VERSION  BUILD  STABLE
+0.17.3              3     yes
+0.17.2              2      no
+0.17.1              1      no
+0.17.0              0      no
+```
+
+**Output (Fabric loaders - JSON):**
+```json
+{
+  "status": "success",
+  "data": {
+    "minecraft_version": "1.21.1",
+    "loaders": [
+      {
+        "version": "0.17.3",
+        "build": 3,
+        "stable": true
+      }
+    ],
+    "latest_stable": "0.17.3",
+    "count": 10
   }
 }
 ```
