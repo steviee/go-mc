@@ -141,7 +141,7 @@ func TestDownloadFile(t *testing.T) {
 	installer := NewInstaller()
 	ctx := context.Background()
 
-	err := installer.downloadFile(ctx, server.URL, destPath)
+	err := installer.DownloadFile(ctx, server.URL, destPath)
 	require.NoError(t, err)
 
 	// Verify file was created
@@ -166,7 +166,7 @@ func TestDownloadFile_HTTPError(t *testing.T) {
 	installer := NewInstaller()
 	ctx := context.Background()
 
-	err := installer.downloadFile(ctx, server.URL, destPath)
+	err := installer.DownloadFile(ctx, server.URL, destPath)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status")
 }
@@ -188,7 +188,7 @@ func TestDownloadFile_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	err := installer.downloadFile(ctx, server.URL, destPath)
+	err := installer.DownloadFile(ctx, server.URL, destPath)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context canceled")
 }
@@ -206,7 +206,7 @@ func TestDownloadFile_InvalidPath(t *testing.T) {
 	// Try to write to a directory that doesn't exist and can't be created
 	destPath := "/nonexistent/directory/that/cannot/be/created/test-mod.jar"
 
-	err := installer.downloadFile(ctx, server.URL, destPath)
+	err := installer.DownloadFile(ctx, server.URL, destPath)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "create file")
 }

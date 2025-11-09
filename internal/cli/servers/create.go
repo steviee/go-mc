@@ -371,6 +371,7 @@ func createContainer(ctx context.Context, client container.Client, config *Serve
 	}
 
 	dataDir := filepath.Join(dataHome, "go-mc", "servers", name, "data")
+	modsDir := filepath.Join(dataHome, "go-mc", "servers", name, "mods")
 
 	containerConfig := &container.ContainerConfig{
 		Name:  name,
@@ -389,6 +390,7 @@ func createContainer(ctx context.Context, client container.Client, config *Serve
 		},
 		Volumes: map[string]string{
 			dataDir: "/data",
+			modsDir: "/data/mods",
 		},
 		Labels: map[string]string{
 			"go-mc.server":  name,
