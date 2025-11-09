@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -325,6 +326,47 @@ func UnregisterServer(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+// CleanupOrphanedServer detects and cleans up orphaned server registrations.
+// An orphaned server is one that is registered in global state but has no state file.
+// Returns true if an orphaned server was cleaned up, false otherwise.
+func CleanupOrphanedServer(ctx context.Context, name string) (bool, error) {
+	if err := ValidateServerName(name); err != nil {
+		return false, err
+	}
+
+	// Check if server is registered in global state
+	registered, err := IsServerRegistered(ctx, name)
+	if err != nil {
+		return false, fmt.Errorf("failed to check registration: %w", err)
+	}
+
+	// If not registered, nothing to clean up
+	if !registered {
+		return false, nil
+	}
+
+	// Check if state file exists
+	exists, err := ServerExists(ctx, name)
+	if err != nil {
+		return false, fmt.Errorf("failed to check state file: %w", err)
+	}
+
+	// If state file exists, not orphaned
+	if exists {
+		return false, nil
+	}
+
+	// Server is orphaned - unregister it
+	slog.Info("detected orphaned server registration, cleaning up", "server", name)
+
+	if err := UnregisterServer(ctx, name); err != nil {
+		return false, fmt.Errorf("failed to unregister orphaned server: %w", err)
+	}
+
+	slog.Info("cleaned up orphaned server registration", "server", name)
+	return true, nil
 }
 
 // IsServerRegistered checks if a server is registered.

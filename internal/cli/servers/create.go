@@ -151,6 +151,17 @@ func runCreate(ctx context.Context, stdout, stderr io.Writer, name string, flags
 		return outputError(stdout, jsonMode, fmt.Errorf("server %q already exists", name))
 	}
 
+	// Clean up orphaned server registration if it exists
+	// This handles the case where a previous creation failed after registration
+	// but before state file was saved
+	cleaned, err := state.CleanupOrphanedServer(ctx, name)
+	if err != nil {
+		return outputError(stdout, jsonMode, fmt.Errorf("failed to check for orphaned registration: %w", err))
+	}
+	if cleaned && !jsonMode {
+		_, _ = fmt.Fprintf(stdout, "Cleaned up orphaned registration for %q\n", name)
+	}
+
 	// Validate and build configuration
 	config, err := buildServerConfig(ctx, name, flags)
 	if err != nil {
