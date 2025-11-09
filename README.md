@@ -1649,6 +1649,7 @@ go-mc/
 - [x] `servers start/stop/restart` commands
 - [ ] `servers rm` command
 - [x] `servers list` (ps) command
+- [x] `servers list-remote` command
 - [x] Server state persistence in YAML
 - [x] Legacy command aliases
 
@@ -1663,12 +1664,12 @@ go-mc/
 - [ ] Player count/TPS retrieval
 - [ ] Graceful shutdown via RCON
 
-### Phase 6: Modrinth Integration
+### Phase 6: Modrinth Integration ✅
 - [x] Modrinth API client
 - [x] `mods search` command
 - [x] Version matching (MC + Fabric)
-- [ ] `mods install` with dependency resolution
-- [ ] `mods list/update/remove` commands
+- [x] `mods install` with dependency resolution
+- [x] `mods list/update/remove` commands
 
 ### Phase 7: User & Whitelist Management
 - [x] UUID lookup via Mojang/Microsoft API
