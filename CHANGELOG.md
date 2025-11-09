@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `servers list-remote` command to list available Minecraft versions from Mojang API (#45)
+  - Filter by type: release, snapshot, or all
+  - Configurable result limit
+  - Table and JSON output formats
+  - Shows latest release and snapshot versions
+  - Minecraft version API client in internal/minecraft package
 - Project initialization with README.md, CLAUDE.md, and development guidelines
 - GitHub Issues and Milestones for all development phases
 - GitHub Workflows for linting, testing, security scanning, and releases

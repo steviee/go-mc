@@ -250,6 +250,68 @@ modded        stopped     1.19.4    -         -           -      -         25567
 }
 ```
 
+#### `servers list-remote` (aliases: `versions`, `list-versions`)
+
+List available Minecraft Java Edition versions from Mojang's official version manifest API.
+
+**Flags:**
+```
+--type <type>      Filter by type: release, snapshot, all (default: release)
+--limit <n>        Limit number of results (default: 20, 0 for unlimited)
+```
+
+**Examples:**
+```bash
+# List latest 20 releases
+go-mc servers list-remote
+
+# List all snapshots
+go-mc servers list-remote --type snapshot --limit 50
+
+# List all versions (releases and snapshots)
+go-mc servers list-remote --type all
+
+# JSON output for scripting
+go-mc servers list-remote --json
+
+# List only the 5 most recent releases
+go-mc servers list-remote --limit 5
+```
+
+**Output (table):**
+```
+Latest Release:  1.21.10
+Latest Snapshot: 25w45a
+
+VERSION   TYPE       RELEASED
+1.21.10   release    2025-10-07
+1.21.9    release    2025-09-18
+1.21.8    release    2025-09-04
+25w45a    snapshot   2025-11-04
+```
+
+**Output (JSON):**
+```json
+{
+  "status": "success",
+  "data": {
+    "latest": {
+      "release": "1.21.10",
+      "snapshot": "25w45a"
+    },
+    "versions": [
+      {
+        "id": "1.21.10",
+        "type": "release",
+        "releaseTime": "2025-10-07T09:17:23+00:00"
+      }
+    ],
+    "count": 20,
+    "total": 1247
+  }
+}
+```
+
 #### `servers top`
 
 Interactive TUI dashboard with real-time monitoring (like `htop` or `lazydocker`).
