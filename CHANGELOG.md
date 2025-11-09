@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `servers rm` command for comprehensive server deletion (#55)
+  - Remove servers with confirmation prompts
+  - Preserve data by default (use `--volumes` flag to delete)
+  - Extra confirmation required for `--volumes` (must type 'yes')
+  - Automatic container stop before removal
+  - Clean up state files and global registry
+  - Release all allocated ports (game, RCON, mod ports)
+  - Multi-server removal support
+  - `--force` flag to skip confirmations
+  - `--all` flag to remove all stopped servers
+  - JSON output support
+  - Clear warnings about data loss
 - Post-installation mod management commands (#49)
   - `mods install <server> <mod-slugs...>` - Install mods on existing servers
   - `mods list <server>` - List installed mods with version and port information
