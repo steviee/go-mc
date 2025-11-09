@@ -320,25 +320,24 @@ func TestBuildServerConfig_AllEdgeCases(t *testing.T) {
 		{
 			name: "maximum memory",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "16G",
 				Port:    0,
 			},
 			wantErr: false,
 		},
 		{
-			name: "empty version",
+			name: "empty version auto-fetches latest",
 			flags: &CreateFlags{
 				Version: "",
 				Memory:  "2G",
 			},
-			wantErr: true,
-			errMsg:  "invalid version",
+			wantErr: false, // Auto-fetch makes empty version valid
 		},
 		{
 			name: "empty memory",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "",
 			},
 			wantErr: true,

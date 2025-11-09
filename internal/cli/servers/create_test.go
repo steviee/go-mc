@@ -61,9 +61,9 @@ func TestBuildServerConfig(t *testing.T) {
 		checkPort bool
 	}{
 		{
-			name: "valid config with defaults",
+			name: "valid config with explicit version",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "2G",
 				Port:    0, // auto-allocate
 			},
@@ -73,7 +73,7 @@ func TestBuildServerConfig(t *testing.T) {
 		{
 			name: "valid config with explicit port",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "4G",
 				Port:    25566,
 			},
@@ -81,9 +81,9 @@ func TestBuildServerConfig(t *testing.T) {
 			checkPort: true,
 		},
 		{
-			name: "invalid version",
+			name: "invalid version format",
 			flags: &CreateFlags{
-				Version: "",
+				Version: "invalid version with spaces",
 				Memory:  "2G",
 			},
 			wantErr: true,
@@ -92,7 +92,7 @@ func TestBuildServerConfig(t *testing.T) {
 		{
 			name: "invalid memory format",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "invalid",
 			},
 			wantErr: true,
@@ -101,7 +101,7 @@ func TestBuildServerConfig(t *testing.T) {
 		{
 			name: "invalid port",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "2G",
 				Port:    99999,
 			},
@@ -111,7 +111,7 @@ func TestBuildServerConfig(t *testing.T) {
 		{
 			name: "valid config with mods",
 			flags: &CreateFlags{
-				Version: "1.21.1",
+				Version: "1.20.4",
 				Memory:  "2G",
 				Port:    0,
 				Mods:    []string{"fabric-api", "sodium"},
@@ -173,7 +173,7 @@ func TestBuildServerConfig_PortAllocation(t *testing.T) {
 	require.NoError(t, state.AllocatePort(ctx, 25566))
 
 	flags := &CreateFlags{
-		Version: "1.21.1",
+		Version: "1.20.4",
 		Memory:  "2G",
 		Port:    0, // auto-allocate
 	}
@@ -197,7 +197,7 @@ func TestBuildServerConfig_PortConflict(t *testing.T) {
 	require.NoError(t, state.AllocatePort(ctx, 25565))
 
 	flags := &CreateFlags{
-		Version: "1.21.1",
+		Version: "1.20.4",
 		Memory:  "2G",
 		Port:    25565, // Try to use already allocated port
 	}
@@ -237,7 +237,7 @@ func TestBuildServerState(t *testing.T) {
 
 	config := &ServerConfig{
 		Name:        "testserver",
-		Version:     "1.21.1",
+		Version:     "1.20.4",
 		Memory:      "2G",
 		Port:        25565,
 		RCONPort:    35565,
@@ -276,7 +276,7 @@ func TestShowDryRun(t *testing.T) {
 			jsonMode: false,
 			config: &ServerConfig{
 				Name:     "testserver",
-				Version:  "1.21.1",
+				Version:  "1.20.4",
 				Memory:   "2G",
 				Port:     25565,
 				RCONPort: 35565,
@@ -288,7 +288,7 @@ func TestShowDryRun(t *testing.T) {
 			jsonMode: true,
 			config: &ServerConfig{
 				Name:     "testserver",
-				Version:  "1.21.1",
+				Version:  "1.20.4",
 				Memory:   "4G",
 				Port:     25566,
 				RCONPort: 35566,
@@ -333,7 +333,7 @@ func TestOutputSuccess(t *testing.T) {
 			jsonMode: false,
 			config: &ServerConfig{
 				Name:        "testserver",
-				Version:     "1.21.1",
+				Version:     "1.20.4",
 				Memory:      "2G",
 				Port:        25565,
 				RCONPort:    35565,
@@ -347,7 +347,7 @@ func TestOutputSuccess(t *testing.T) {
 			jsonMode: false,
 			config: &ServerConfig{
 				Name:        "testserver",
-				Version:     "1.21.1",
+				Version:     "1.20.4",
 				Memory:      "2G",
 				Port:        25565,
 				RCONPort:    35565,
@@ -361,7 +361,7 @@ func TestOutputSuccess(t *testing.T) {
 			jsonMode: true,
 			config: &ServerConfig{
 				Name:        "testserver",
-				Version:     "1.21.1",
+				Version:     "1.20.4",
 				Memory:      "4G",
 				Port:        25566,
 				RCONPort:    35566,
