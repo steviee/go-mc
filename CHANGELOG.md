@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Table and JSON output formats
   - Shows latest release and snapshot versions
   - Minecraft version API client in internal/minecraft package
+- Enhanced TUI dashboard (`servers top`) with detailed server information (#47)
+  - Added RCON port column for remote administration visibility
+  - Added CPU% column showing real-time CPU usage for running servers
+  - Added MEM% column showing real-time memory usage percentage
+  - Added MODS column showing count of installed mods
+  - Container stats API integration for resource monitoring
+  - Port detection system for game, RCON, and mod-specific ports
+  - Automatic mod port detection (Simple Voice Chat, Geyser, BlueMap)
+  - Extended ServerInfo model with Fabric version, stats, ports, and mods
+  - Helper functions for byte formatting and percentage display
+  - Comprehensive test coverage (74.5%) for all new functionality
 - Project initialization with README.md, CLAUDE.md, and development guidelines
 - GitHub Issues and Milestones for all development phases
 - GitHub Workflows for linting, testing, security scanning, and releases

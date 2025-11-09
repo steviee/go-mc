@@ -284,3 +284,211 @@ func TestView_MultipleServers_Selection(t *testing.T) {
 	}
 	assert.True(t, foundServer2, "server2 should be in the view")
 }
+
+func TestFormatCPU(t *testing.T) {
+	tests := []struct {
+		name     string
+		server   ServerInfo
+		expected string
+	}{
+		{
+			name: "stopped server",
+			server: ServerInfo{
+				Status:     "stopped",
+				CPUPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "created server",
+			server: ServerInfo{
+				Status:     "created",
+				CPUPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "running server with CPU usage",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 25.3456,
+			},
+			expected: "25.3%",
+		},
+		{
+			name: "running server with zero CPU",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "running server with high CPU",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 99.9,
+			},
+			expected: "99.9%",
+		},
+		{
+			name: "running server with low CPU",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 0.5,
+			},
+			expected: "0.5%",
+		},
+		{
+			name: "running server with exact rounding",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 50.0,
+			},
+			expected: "50.0%",
+		},
+		{
+			name: "running server with fractional rounding",
+			server: ServerInfo{
+				Status:     "running",
+				CPUPercent: 33.33333,
+			},
+			expected: "33.3%",
+		},
+		{
+			name: "exited server (not running)",
+			server: ServerInfo{
+				Status:     "exited",
+				CPUPercent: 50.0,
+			},
+			expected: "-",
+		},
+		{
+			name: "paused server",
+			server: ServerInfo{
+				Status:     "paused",
+				CPUPercent: 10.0,
+			},
+			expected: "-",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatCPU(tt.server)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestFormatMemoryPercent(t *testing.T) {
+	tests := []struct {
+		name     string
+		server   ServerInfo
+		expected string
+	}{
+		{
+			name: "stopped server",
+			server: ServerInfo{
+				Status:        "stopped",
+				MemoryPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "created server",
+			server: ServerInfo{
+				Status:        "created",
+				MemoryPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "running server with memory usage",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 45.2345,
+			},
+			expected: "45.2%",
+		},
+		{
+			name: "running server with zero memory",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 0,
+			},
+			expected: "-",
+		},
+		{
+			name: "running server with high memory",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 98.7,
+			},
+			expected: "98.7%",
+		},
+		{
+			name: "running server with low memory",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 1.2,
+			},
+			expected: "1.2%",
+		},
+		{
+			name: "running server with exact rounding",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 75.0,
+			},
+			expected: "75.0%",
+		},
+		{
+			name: "running server with fractional rounding",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 66.66666,
+			},
+			expected: "66.7%",
+		},
+		{
+			name: "running server at 100%",
+			server: ServerInfo{
+				Status:        "running",
+				MemoryPercent: 100.0,
+			},
+			expected: "100.0%",
+		},
+		{
+			name: "exited server (not running)",
+			server: ServerInfo{
+				Status:        "exited",
+				MemoryPercent: 50.0,
+			},
+			expected: "-",
+		},
+		{
+			name: "paused server",
+			server: ServerInfo{
+				Status:        "paused",
+				MemoryPercent: 25.5,
+			},
+			expected: "-",
+		},
+		{
+			name: "missing server",
+			server: ServerInfo{
+				Status:        "missing",
+				MemoryPercent: 10.0,
+			},
+			expected: "-",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatMemoryPercent(tt.server)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

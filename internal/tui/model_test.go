@@ -85,6 +85,14 @@ func (m *mockContainerClient) ListContainers(ctx context.Context, opts *containe
 	return args.Get(0).([]*container.ContainerInfo), args.Error(1)
 }
 
+func (m *mockContainerClient) GetContainerStats(ctx context.Context, containerID string) (*container.ContainerStats, error) {
+	args := m.Called(ctx, containerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*container.ContainerStats), args.Error(1)
+}
+
 func TestNewModel(t *testing.T) {
 	client := &mockContainerClient{}
 

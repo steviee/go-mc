@@ -42,6 +42,9 @@ type Client interface {
 
 	// ListContainers lists containers based on the provided options.
 	ListContainers(ctx context.Context, opts *ListOptions) ([]*ContainerInfo, error)
+
+	// GetContainerStats gets current CPU and memory statistics for a container.
+	GetContainerStats(ctx context.Context, containerID string) (*ContainerStats, error)
 }
 
 // RuntimeInfo contains information about the container runtime.
@@ -108,4 +111,12 @@ type ListOptions struct {
 	All    bool              // Include stopped containers
 	Limit  int               // Maximum number of containers to return
 	Filter map[string]string // Filters (e.g., {"label": "go-mc"})
+}
+
+// ContainerStats contains CPU and memory statistics for a container.
+type ContainerStats struct {
+	CPUPercent    float64 // CPU usage percentage (0-100)
+	MemoryUsed    int64   // Memory used in bytes
+	MemoryLimit   int64   // Memory limit in bytes
+	MemoryPercent float64 // Memory usage percentage (0-100)
 }

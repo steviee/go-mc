@@ -74,6 +74,10 @@ func (m Model) renderTable() string {
 	statusWidth := len("STATUS")
 	versionWidth := len("VERSION")
 	portWidth := len("PORT")
+	rconWidth := len("RCON")
+	cpuWidth := len("CPU%")
+	memPercentWidth := len("MEM%")
+	modsWidth := len("MODS")
 	memoryWidth := len("MEMORY")
 	uptimeWidth := len("UPTIME")
 
@@ -91,6 +95,27 @@ func (m Model) renderTable() string {
 		if len(portStr) > portWidth {
 			portWidth = len(portStr)
 		}
+
+		rconStr := fmt.Sprintf("%d", server.RCONPort)
+		if len(rconStr) > rconWidth {
+			rconWidth = len(rconStr)
+		}
+
+		cpuStr := formatCPU(server)
+		if len(cpuStr) > cpuWidth {
+			cpuWidth = len(cpuStr)
+		}
+
+		memPctStr := formatMemoryPercent(server)
+		if len(memPctStr) > memPercentWidth {
+			memPercentWidth = len(memPctStr)
+		}
+
+		modsStr := fmt.Sprintf("%d", len(server.InstalledMods))
+		if len(modsStr) > modsWidth {
+			modsWidth = len(modsStr)
+		}
+
 		memStr := formatMemory(server)
 		if len(memStr) > memoryWidth {
 			memoryWidth = len(memStr)
@@ -101,11 +126,15 @@ func (m Model) renderTable() string {
 	}
 
 	// Render header row
-	headerRow := fmt.Sprintf("%-*s  %-*s  %-*s  %*s  %*s  %*s",
+	headerRow := fmt.Sprintf("%-*s  %-*s  %-*s  %*s  %*s  %*s  %*s  %*s  %*s  %*s",
 		nameWidth, "NAME",
 		statusWidth, "STATUS",
 		versionWidth, "VERSION",
 		portWidth, "PORT",
+		rconWidth, "RCON",
+		cpuWidth, "CPU%",
+		memPercentWidth, "MEM%",
+		modsWidth, "MODS",
 		memoryWidth, "MEMORY",
 		uptimeWidth, "UPTIME",
 	)
@@ -133,6 +162,10 @@ func (m Model) renderTable() string {
 			statusCol := fmt.Sprintf("%-*s", statusWidth, statusText)
 			versionCol := fmt.Sprintf("%-*s", versionWidth, server.Version)
 			portCol := fmt.Sprintf("%*d", portWidth, server.Port)
+			rconCol := fmt.Sprintf("%*d", rconWidth, server.RCONPort)
+			cpuCol := fmt.Sprintf("%*s", cpuWidth, formatCPU(server))
+			memPctCol := fmt.Sprintf("%*s", memPercentWidth, formatMemoryPercent(server))
+			modsCol := fmt.Sprintf("%*d", modsWidth, len(server.InstalledMods))
 			memCol := fmt.Sprintf("%*s", memoryWidth, formatMemory(server))
 			uptimeCol := fmt.Sprintf("%*s", uptimeWidth, uptime)
 
@@ -145,6 +178,10 @@ func (m Model) renderTable() string {
 			// Apply selected style to remaining columns
 			row += selectedRowStyle.Render(versionCol) + "  "
 			row += selectedRowStyle.Render(portCol) + "  "
+			row += selectedRowStyle.Render(rconCol) + "  "
+			row += selectedRowStyle.Render(cpuCol) + "  "
+			row += selectedRowStyle.Render(memPctCol) + "  "
+			row += selectedRowStyle.Render(modsCol) + "  "
 			row += selectedRowStyle.Render(memCol) + "  "
 			row += selectedRowStyle.Render(uptimeCol)
 
@@ -155,6 +192,10 @@ func (m Model) renderTable() string {
 			statusCol := fmt.Sprintf("%-*s", statusWidth, statusText)
 			versionCol := fmt.Sprintf("%-*s", versionWidth, server.Version)
 			portCol := fmt.Sprintf("%*d", portWidth, server.Port)
+			rconCol := fmt.Sprintf("%*d", rconWidth, server.RCONPort)
+			cpuCol := fmt.Sprintf("%*s", cpuWidth, formatCPU(server))
+			memPctCol := fmt.Sprintf("%*s", memPercentWidth, formatMemoryPercent(server))
+			modsCol := fmt.Sprintf("%*d", modsWidth, len(server.InstalledMods))
 			memCol := fmt.Sprintf("%*s", memoryWidth, formatMemory(server))
 			uptimeCol := fmt.Sprintf("%*s", uptimeWidth, uptime)
 
@@ -162,6 +203,10 @@ func (m Model) renderTable() string {
 				statusStyle.Render(statusCol) + "  " +
 				versionCol + "  " +
 				portCol + "  " +
+				rconCol + "  " +
+				cpuCol + "  " +
+				memPctCol + "  " +
+				modsCol + "  " +
 				memCol + "  " +
 				uptimeCol
 
@@ -191,4 +236,20 @@ func formatMemory(server ServerInfo) string {
 	}
 	// For non-running containers, just show dash
 	return "-"
+}
+
+// formatCPU formats CPU usage percentage
+func formatCPU(server ServerInfo) string {
+	if server.Status != "running" || server.CPUPercent == 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.1f%%", server.CPUPercent)
+}
+
+// formatMemoryPercent formats memory usage percentage
+func formatMemoryPercent(server ServerInfo) string {
+	if server.Status != "running" || server.MemoryPercent == 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.1f%%", server.MemoryPercent)
 }

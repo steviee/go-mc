@@ -50,8 +50,10 @@ func loadServers(ctx context.Context, client container.Client) ([]ServerInfo, er
 // collectServerInfo collects information about a single server
 func collectServerInfo(ctx context.Context, name string, client container.Client) (ServerInfo, error) {
 	server := ServerInfo{
-		Name:   name,
-		Status: "unknown",
+		Name:          name,
+		Status:        "unknown",
+		InstalledMods: []ModInfo{},
+		Ports:         []PortInfo{},
 	}
 
 	// Load server state
@@ -64,6 +66,24 @@ func collectServerInfo(ctx context.Context, name string, client container.Client
 	server.Version = serverState.Minecraft.Version
 	server.Port = serverState.Minecraft.GamePort
 	server.MemoryTotal = serverState.Minecraft.Memory
+	server.FabricVersion = serverState.Minecraft.FabricLoaderVersion
+	server.RCONPort = serverState.Minecraft.RconPort
+
+	// Convert installed mods
+	if len(serverState.Mods) > 0 {
+		installedMods := make([]ModInfo, len(serverState.Mods))
+		for i, mod := range serverState.Mods {
+			installedMods[i] = ModInfo{
+				Name:    mod.Name,
+				Slug:    mod.Slug,
+				Version: mod.Version,
+			}
+		}
+		server.InstalledMods = installedMods
+	}
+
+	// Detect ports
+	server.Ports = detectPorts(serverState)
 
 	// If no container ID, server was never started
 	if serverState.ContainerID == "" {
@@ -85,12 +105,27 @@ func collectServerInfo(ctx context.Context, name string, client container.Client
 	// Map container state to our status
 	server.Status = normalizeContainerState(containerInfo.State)
 
-	// Calculate uptime for running containers
+	// Calculate uptime and get stats for running containers
 	if server.Status == "running" && !serverState.LastStarted.IsZero() {
 		server.StartedAt = serverState.LastStarted
 		server.Uptime = formatUptime(serverState.LastStarted)
-		// Note: Memory usage stats are not available through current container client
-		// We show total allocation instead
+
+		// Get container stats (CPU and memory usage)
+		stats, err := client.GetContainerStats(ctx, serverState.ContainerID)
+		if err == nil {
+			server.CPUPercent = stats.CPUPercent
+			server.MemoryUsedBytes = stats.MemoryUsed
+			server.MemoryLimitBytes = stats.MemoryLimit
+			server.MemoryPercent = stats.MemoryPercent
+
+			// Update MemoryUsed string with actual usage
+			server.MemoryUsed = formatBytes(stats.MemoryUsed)
+		} else {
+			// Log warning but continue (stats might not be available)
+			slog.Warn("failed to get container stats", "server", name, "error", err)
+			server.MemoryUsed = "-"
+		}
+	} else {
 		server.MemoryUsed = "-"
 	}
 
@@ -133,4 +168,91 @@ func formatUptime(startedAt time.Time) string {
 		return fmt.Sprintf("%dh %dm", hours, minutes)
 	}
 	return fmt.Sprintf("%dm", minutes)
+}
+
+// detectPorts detects all ports used by a server
+func detectPorts(serverState *state.ServerState) []PortInfo {
+	ports := []PortInfo{}
+
+	// Game port (always present)
+	if serverState.Minecraft.GamePort != 0 {
+		ports = append(ports, PortInfo{
+			Number:   serverState.Minecraft.GamePort,
+			Protocol: "tcp",
+			Service:  "Minecraft",
+			Source:   "config",
+		})
+	}
+
+	// RCON port (always present)
+	if serverState.Minecraft.RconPort != 0 {
+		ports = append(ports, PortInfo{
+			Number:   serverState.Minecraft.RconPort,
+			Protocol: "tcp",
+			Service:  "RCON",
+			Source:   "config",
+		})
+	}
+
+	// Mod-specific ports (detect from known mods)
+	modPorts := detectModPorts(serverState.Mods)
+	ports = append(ports, modPorts...)
+
+	return ports
+}
+
+// detectModPorts detects ports required by installed mods
+func detectModPorts(mods []state.ModInfo) []PortInfo {
+	var ports []PortInfo
+
+	// Known mod port mappings
+	knownModPorts := map[string]PortInfo{
+		"simple-voice-chat": {
+			Number:   24454,
+			Protocol: "udp",
+			Service:  "Simple Voice Chat",
+			Source:   "mod",
+		},
+		"geyser": {
+			Number:   19132,
+			Protocol: "udp",
+			Service:  "Geyser (Bedrock)",
+			Source:   "mod",
+		},
+		"bluemap": {
+			Number:   8100,
+			Protocol: "tcp",
+			Service:  "BlueMap",
+			Source:   "mod",
+		},
+	}
+
+	// Check each installed mod
+	for _, mod := range mods {
+		if portInfo, found := knownModPorts[mod.Slug]; found {
+			ports = append(ports, portInfo)
+		}
+	}
+
+	return ports
+}
+
+// formatBytes formats bytes into human-readable format (KB, MB, GB)
+func formatBytes(bytes int64) string {
+	const (
+		KB = 1024
+		MB = 1024 * KB
+		GB = 1024 * MB
+	)
+
+	if bytes >= GB {
+		return fmt.Sprintf("%.1fG", float64(bytes)/float64(GB))
+	}
+	if bytes >= MB {
+		return fmt.Sprintf("%.1fM", float64(bytes)/float64(MB))
+	}
+	if bytes >= KB {
+		return fmt.Sprintf("%.1fK", float64(bytes)/float64(KB))
+	}
+	return fmt.Sprintf("%dB", bytes)
 }
