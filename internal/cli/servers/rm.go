@@ -190,7 +190,7 @@ func removeServer(ctx context.Context, client container.Client, name string, fla
 		if err == nil {
 			// Container exists - stop if running
 			if isContainerRunning(info.Status) {
-				slog.Info("stopping running container", "server", name, "container_id", serverState.ContainerID)
+				slog.Debug("stopping running container", "server", name, "container_id", serverState.ContainerID)
 				stopTimeout := 30 * time.Second
 				stopCtx, cancel := context.WithTimeout(ctx, stopTimeout+10*time.Second)
 				defer cancel()
@@ -200,7 +200,7 @@ func removeServer(ctx context.Context, client container.Client, name string, fla
 			}
 
 			// Remove container
-			slog.Info("removing container", "server", name, "container_id", serverState.ContainerID)
+			slog.Debug("removing container", "server", name, "container_id", serverState.ContainerID)
 			removeOpts := &container.RemoveOptions{
 				Force:         true,
 				RemoveVolumes: false, // We handle volumes separately
@@ -213,7 +213,7 @@ func removeServer(ctx context.Context, client container.Client, name string, fla
 
 	// Remove volumes if requested
 	if flags.Volumes {
-		slog.Info("removing server directories", "server", name)
+		slog.Debug("removing server directories", "server", name)
 		if err := removeServerDirectories(serverState); err != nil {
 			slog.Warn("failed to remove server directories", "error", err)
 		}
@@ -224,7 +224,7 @@ func removeServer(ctx context.Context, client container.Client, name string, fla
 		if err := state.ReleasePort(ctx, port); err != nil {
 			slog.Warn("failed to release port", "port", port, "error", err)
 		} else {
-			slog.Info("released port", "port", port)
+			slog.Debug("released port", "port", port)
 		}
 	}
 
@@ -252,7 +252,7 @@ func removeServer(ctx context.Context, client container.Client, name string, fla
 		return releasedPorts, fmt.Errorf("failed to update global state: %w", err)
 	}
 
-	slog.Info("server removed", "name", name)
+	slog.Debug("server removed", "name", name)
 	return releasedPorts, nil
 }
 
@@ -271,7 +271,7 @@ func removeServerDirectories(serverState *state.ServerState) error {
 	// Server directory is the parent of the data volume
 	serverDir := dataHome + "/go-mc/servers/" + serverState.Name
 
-	slog.Info("deleting server directory", "path", serverDir)
+	slog.Debug("deleting server directory", "path", serverDir)
 	if err := os.RemoveAll(serverDir); err != nil {
 		return fmt.Errorf("failed to remove server directory: %w", err)
 	}

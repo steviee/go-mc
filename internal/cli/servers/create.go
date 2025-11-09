@@ -249,7 +249,7 @@ func buildServerConfig(ctx context.Context, name string, flags *CreateFlags) (*S
 
 	// Auto-detect latest Minecraft version if not specified or using default
 	if version == "" || version == defaultMinecraftVersion {
-		slog.Info("fetching latest Minecraft version")
+		slog.Debug("fetching latest Minecraft version")
 		mcClient := minecraft.NewClient(nil)
 		manifest, err := mcClient.GetVersionManifest(ctx)
 		if err != nil {
@@ -257,7 +257,7 @@ func buildServerConfig(ctx context.Context, name string, flags *CreateFlags) (*S
 			version = defaultMinecraftVersion
 		} else {
 			version = manifest.Latest.Release
-			slog.Info("using latest Minecraft version", "version", version)
+			slog.Debug("using latest Minecraft version", "version", version)
 		}
 	}
 
@@ -421,7 +421,7 @@ func createContainer(ctx context.Context, client container.Client, config *Serve
 		return "", err
 	}
 
-	slog.Info("container created",
+	slog.Debug("container created",
 		"name", name,
 		"id", containerID,
 		"port", config.Port,
