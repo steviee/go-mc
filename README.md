@@ -194,19 +194,14 @@ go-mc servers create test --dry-run
 
 **Output:**
 ```
-Creating Minecraft Fabric server 'survival'...
-  Minecraft:  1.20.4
-  Fabric:     0.15.7
-  Memory:     2G
-  Port:       25565
-  RCON:       25575 (password: xK9mP2vL8nQ4wR7z)
+Created server 'survival'
+  Minecraft: 1.21.1 (Fabric)
+  Port:      25565
+  RCON:      25575
+  Memory:    2G
+  Container: itzg/minecraft-server:latest
 
-Pulling container image ghcr.io/itzg/minecraft-server:latest...
-Creating Podman container go-mc-survival...
-Writing configuration to ~/.config/go-mc/servers/survival.yaml
-
-✓ Server 'survival' created successfully
-  Container ID: a1b2c3d4e5f6
+Run 'go-mc servers start survival' to start the server.
 
 Next steps:
   Start:  go-mc servers start survival
