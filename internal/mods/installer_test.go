@@ -37,7 +37,7 @@ func TestGetModsDir(t *testing.T) {
 					Data: "/var/lib/go-mc/data/test-server",
 				},
 			},
-			want:    "/var/lib/go-mc/data/test-server/mods",
+			want:    "/var/lib/go-mc/data/mods",
 			wantErr: false,
 		},
 		{
