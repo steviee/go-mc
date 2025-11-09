@@ -119,7 +119,7 @@ func (i *Installer) InstallMods(ctx context.Context, serverName string, modSlugs
 
 // installSingleMod installs a single mod and returns its ModInfo.
 // It queries the Modrinth API to find a compatible version, downloads the file,
-// and returns the mod metadata for storage in the server state.
+// allocates ports if needed, and returns the mod metadata for storage in the server state.
 func (i *Installer) installSingleMod(ctx context.Context, serverState *state.ServerState, slug string, modsDir string) (state.ModInfo, error) {
 	// Get mod metadata from database
 	dbMod, err := GetMod(slug)
@@ -127,21 +127,48 @@ func (i *Installer) installSingleMod(ctx context.Context, serverState *state.Ser
 		return state.ModInfo{}, err
 	}
 
+	// Allocate port if mod requires one
+	allocatedPort := 0
+	if dbMod.RequiresPort() {
+		port, err := allocateModPort(ctx, dbMod.DefaultPort)
+		if err != nil {
+			return state.ModInfo{}, fmt.Errorf("allocate port for %s: %w", slug, err)
+		}
+		allocatedPort = port
+
+		slog.Info("allocated port for mod",
+			"mod", slug,
+			"port", port,
+			"protocol", dbMod.Protocol)
+	}
+
 	// Find compatible version from Modrinth
 	version, err := i.modrinthClient.FindCompatibleVersion(ctx, dbMod.ModrinthID, serverState.Minecraft.Version, "")
 	if err != nil {
+		// Release port if we allocated one
+		if allocatedPort > 0 {
+			_ = state.ReleasePort(ctx, allocatedPort)
+		}
 		return state.ModInfo{}, fmt.Errorf("find compatible version: %w", err)
 	}
 
 	// Get primary file
 	file, err := modrinth.GetPrimaryFile(version)
 	if err != nil {
+		// Release port if we allocated one
+		if allocatedPort > 0 {
+			_ = state.ReleasePort(ctx, allocatedPort)
+		}
 		return state.ModInfo{}, fmt.Errorf("get primary file: %w", err)
 	}
 
 	// Download file
 	destPath := filepath.Join(modsDir, file.Filename)
 	if err := i.downloadFile(ctx, file.URL, destPath); err != nil {
+		// Release port if we allocated one
+		if allocatedPort > 0 {
+			_ = state.ReleasePort(ctx, allocatedPort)
+		}
 		return state.ModInfo{}, fmt.Errorf("download file: %w", err)
 	}
 
@@ -157,6 +184,8 @@ func (i *Installer) installSingleMod(ctx context.Context, serverState *state.Ser
 		SHA512:       "", // Modrinth API doesn't provide SHA512 in the file struct
 		SizeBytes:    file.Size,
 		Dependencies: dbMod.Dependencies,
+		Port:         allocatedPort,
+		Protocol:     dbMod.Protocol,
 	}
 
 	return modInfo, nil
@@ -256,4 +285,37 @@ func (i *Installer) EnsureFabricAPI(ctx context.Context, serverName string) erro
 	}
 
 	return nil
+}
+
+// allocateModPort allocates a port for a mod, trying the preferred port first,
+// then finding the next available port if the preferred one is taken.
+func allocateModPort(ctx context.Context, preferredPort int) (int, error) {
+	// Try preferred port first
+	allocated, err := state.IsPortAllocated(ctx, preferredPort)
+	if err != nil {
+		return 0, fmt.Errorf("check port allocation: %w", err)
+	}
+
+	if !allocated {
+		// Preferred port is available, allocate it
+		if err := state.AllocatePort(ctx, preferredPort); err != nil {
+			return 0, fmt.Errorf("allocate preferred port: %w", err)
+		}
+		return preferredPort, nil
+	}
+
+	// Preferred port is taken, find next available
+	slog.Debug("preferred port is allocated, finding next available", "preferred", preferredPort)
+
+	nextPort, err := state.GetNextAvailablePort(ctx, preferredPort+1)
+	if err != nil {
+		return 0, fmt.Errorf("get next available port: %w", err)
+	}
+
+	// Allocate the next available port
+	if err := state.AllocatePort(ctx, nextPort); err != nil {
+		return 0, fmt.Errorf("allocate next port: %w", err)
+	}
+
+	return nextPort, nil
 }

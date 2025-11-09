@@ -344,3 +344,53 @@ func Example_ensureFabricAPI() {
 
 	fmt.Println("Fabric API is installed")
 }
+
+// TestInstallMods_WithPortAllocation tests installing mods that require ports
+func TestInstallMods_WithPortAllocation(t *testing.T) {
+	// Create temporary state directory
+	tmpDir := t.TempDir()
+	t.Setenv("GO_MC_STATE_DIR", tmpDir)
+
+	// Create a test server state
+	serverState := state.NewServerState("test-server")
+	serverState.Minecraft.Version = "1.21.1"
+	serverState.Volumes.Data = filepath.Join(tmpDir, "data")
+
+	ctx := context.Background()
+	err := state.SaveServerState(ctx, serverState)
+	require.NoError(t, err)
+
+	// Initialize global state
+	globalState := state.NewGlobalState()
+	err = state.SaveGlobalState(ctx, globalState)
+	require.NoError(t, err)
+
+	// Note: This test will fail because it tries to actually download from Modrinth
+	// and we don't have a mock for the Modrinth API client yet.
+	// This is an integration test that should be run separately with network access.
+	t.Skip("Skipping integration test that requires Modrinth API access")
+
+	installer := NewInstaller()
+
+	// Try to install simple-voice-chat which requires a port
+	installed, err := installer.InstallMods(ctx, "test-server", []string{"simple-voice-chat"})
+	require.NoError(t, err)
+	assert.Contains(t, installed, "fabric-api")
+	assert.Contains(t, installed, "simple-voice-chat")
+
+	// Verify port was allocated
+	updatedState, err := state.LoadServerState(ctx, "test-server")
+	require.NoError(t, err)
+
+	var voiceChatMod *state.ModInfo
+	for i := range updatedState.Mods {
+		if updatedState.Mods[i].Slug == "simple-voice-chat" {
+			voiceChatMod = &updatedState.Mods[i]
+			break
+		}
+	}
+
+	require.NotNil(t, voiceChatMod)
+	assert.Equal(t, 24454, voiceChatMod.Port)
+	assert.Equal(t, "udp", voiceChatMod.Protocol)
+}

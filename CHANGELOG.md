@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automatic mod installation system with dependency resolution (#48)
+  - Curated mod database in `internal/mods/database.go` with 5 server-side mods
+  - Modrinth API integration for mod downloads and version compatibility
+  - Automatic dependency resolution (e.g., lithium auto-installs fabric-api)
+  - Port allocation system for mods requiring network ports
+  - Mod state tracking with port and protocol information
+  - `--with-lithium`, `--with-voice-chat`, `--with-geyser`, `--with-bluemap` flags for `servers create`
+  - Automatic Fabric API installation on every server (Omakase principle)
+  - Support for UDP and TCP port allocation (e.g., voice chat on UDP 24454)
+  - Comprehensive test coverage for mod installer
 - `servers list-remote` command to list available Minecraft versions from Mojang API (#45)
   - Filter by type: release, snapshot, or all
   - Configurable result limit

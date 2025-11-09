@@ -75,6 +75,8 @@ type ModInfo struct {
 	SHA512       string   `yaml:"sha512"`
 	SizeBytes    int64    `yaml:"size_bytes"`
 	Dependencies []string `yaml:"dependencies"`
+	Port         int      `yaml:"port,omitempty"`     // Port allocated for this mod (0 if no port needed)
+	Protocol     string   `yaml:"protocol,omitempty"` // Protocol: "tcp", "udp", or "" if no port
 }
 
 // OpInfo represents an operator.

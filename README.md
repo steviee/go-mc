@@ -96,8 +96,17 @@ go-mc servers top
 # Search for mods (shows compatible versions)
 go-mc mods search sodium --json
 
-# Add mods to server (auto-resolves dependencies)
-go-mc servers create modded --mods sodium,lithium,iris
+# Create server with performance optimization (Fabric API auto-installed)
+go-mc servers create performance --with-lithium
+
+# Create server with voice chat (auto-allocates UDP port 24454)
+go-mc servers create community --with-voice-chat
+
+# Create server with Bedrock support and web map
+go-mc servers create crossplay --with-geyser --with-bluemap
+
+# Custom mods via slug (with automatic dependency resolution)
+go-mc servers create modded --mods sodium,phosphor
 ```
 
 ### User Management
@@ -148,41 +157,39 @@ Create a new Fabric server instance with intelligent defaults.
 
 **Flags:**
 ```
---version <version>          Minecraft version (default: latest stable)
---fabric-version <version>   Fabric loader version (default: latest compatible)
+--version <version>          Minecraft version (default: 1.21.1)
 --memory <size>              Memory allocation (default: 2G)
 --port <port>                Server port (default: auto-assign from 25565+)
---rcon-port <port>           RCON port (default: auto-assign from 25575+)
---rcon-password <password>   RCON password (default: auto-generated)
---world-seed <seed>          World seed (default: random)
---difficulty <level>         Difficulty: peaceful, easy, normal, hard (default: normal)
---gamemode <mode>            Gamemode: survival, creative, adventure (default: survival)
---max-players <count>        Max players (default: 20)
---whitelist <name>           Whitelist to use (default: "default")
---whitelist-enabled          Enable whitelist on creation (default: false)
---online-mode                Enable online mode (default: true)
---pvp                        Enable PVP (default: true)
---mods <slugs>               Comma-separated Modrinth mod slugs
+--with-lithium               Install Lithium (performance optimization)
+--with-voice-chat            Install Simple Voice Chat (proximity voice, UDP 24454)
+--with-geyser                Install Geyser (Bedrock client support, UDP 19132)
+--with-bluemap               Install BlueMap (3D web map, TCP 8100)
+--mods <slugs>               Comma-separated Modrinth mod slugs for custom mods
 --start                      Start server immediately after creation
 --dry-run                    Show what would be created without doing it
 ```
 
+**Note:** Fabric API is automatically installed on every server (Omakase principle).
+
 **Examples:**
 ```bash
-# Minimal - use all defaults
+# Minimal - use all defaults (Fabric API auto-installed)
 go-mc servers create survival
 
-# Specific version with mods
-go-mc servers create modded --version 1.20.4 --mods sodium,lithium,iris
+# Performance server with Lithium optimization
+go-mc servers create performance --with-lithium --memory 4G
 
-# Performance server with high memory
-go-mc servers create performance --memory 8G --max-players 50
+# Community server with voice chat (allocates UDP port 24454)
+go-mc servers create community --with-voice-chat
 
-# Create and start immediately
-go-mc servers create test --start
+# Crossplay server with Bedrock support and web map
+go-mc servers create crossplay --with-geyser --with-bluemap
+
+# Fully loaded server with multiple mods
+go-mc servers create ultimate --with-lithium --with-voice-chat --with-bluemap --start
 
 # Preview without creating
-go-mc servers create test --dry-run --json
+go-mc servers create test --dry-run
 ```
 
 **Output:**
