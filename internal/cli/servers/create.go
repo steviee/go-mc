@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steviee/go-mc/internal/container"
+	"github.com/steviee/go-mc/internal/mods"
 	"github.com/steviee/go-mc/internal/state"
 )
 
@@ -35,12 +36,16 @@ const (
 
 // CreateFlags holds all flags for the create command
 type CreateFlags struct {
-	Version string
-	Memory  string
-	Port    int
-	Mods    []string
-	Start   bool
-	DryRun  bool
+	Version       string
+	Memory        string
+	Port          int
+	Mods          []string
+	Start         bool
+	DryRun        bool
+	WithLithium   bool
+	WithVoiceChat bool
+	WithGeyser    bool
+	WithBlueMap   bool
 }
 
 // ServerConfig holds the configuration for creating a server
@@ -83,23 +88,29 @@ Smart defaults (Omakase principle):
   - RCON: Auto-generated secure password
 
 The server is created in a stopped state. Use --start to start it immediately.`,
-		Example: `  # Create a server with defaults
+		Example: `  # Create a server with defaults (includes Fabric API automatically)
   go-mc servers create myserver
 
   # Create with specific version and memory
   go-mc servers create myserver --version 1.20.4 --memory 4G
 
-  # Create with specific port
-  go-mc servers create myserver --port 25566
+  # Create with performance optimization
+  go-mc servers create myserver --with-lithium
 
-  # Create and start immediately
-  go-mc servers create myserver --start
+  # Create with voice chat support (allocates UDP port 24454)
+  go-mc servers create myserver --with-voice-chat
+
+  # Create with Bedrock support and web map (allocates ports automatically)
+  go-mc servers create myserver --with-geyser --with-bluemap
+
+  # Create with multiple mods and start immediately
+  go-mc servers create myserver --with-lithium --with-voice-chat --start
 
   # Preview configuration without creating
   go-mc servers create myserver --dry-run
 
-  # Create with initial mods
-  go-mc servers create myserver --mods fabric-api,sodium`,
+  # Create with custom mods via slug
+  go-mc servers create myserver --mods sodium,phosphor`,
 		Args: requireServerName,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCreate(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), args[0], flags)
@@ -113,6 +124,10 @@ The server is created in a stopped state. Use --start to start it immediately.`,
 	cmd.Flags().StringSliceVar(&flags.Mods, "mods", []string{}, "Comma-separated mod slugs for initial installation")
 	cmd.Flags().BoolVar(&flags.Start, "start", false, "Start server immediately after creation")
 	cmd.Flags().BoolVar(&flags.DryRun, "dry-run", false, "Show configuration without creating")
+	cmd.Flags().BoolVar(&flags.WithLithium, "with-lithium", false, "Install Lithium (performance optimization)")
+	cmd.Flags().BoolVar(&flags.WithVoiceChat, "with-voice-chat", false, "Install Simple Voice Chat (proximity voice)")
+	cmd.Flags().BoolVar(&flags.WithGeyser, "with-geyser", false, "Install Geyser (Bedrock client support)")
+	cmd.Flags().BoolVar(&flags.WithBlueMap, "with-bluemap", false, "Install BlueMap (3D web map)")
 
 	return cmd
 }
@@ -195,6 +210,15 @@ func runCreate(ctx context.Context, stdout, stderr io.Writer, name string, flags
 		_ = state.ReleasePort(ctx, config.RCONPort)
 		_ = containerClient.RemoveContainer(ctx, containerID, &container.RemoveOptions{Force: true})
 		return outputError(stdout, jsonMode, fmt.Errorf("failed to save server state: %w", err))
+	}
+
+	// Install mods if requested
+	if err := installModsIfRequested(ctx, name, flags, stdout, stderr, jsonMode); err != nil {
+		// Don't fail completely, just log the error
+		slog.Warn("failed to install mods", "error", err)
+		if !jsonMode {
+			_, _ = fmt.Fprintf(stderr, "Warning: Failed to install mods: %v\n", err)
+		}
 	}
 
 	// Start container if requested
@@ -516,4 +540,52 @@ func outputError(stdout io.Writer, jsonMode bool, err error) error {
 		_ = json.NewEncoder(stdout).Encode(output)
 	}
 	return err
+}
+
+// installModsIfRequested installs mods based on flags
+func installModsIfRequested(ctx context.Context, serverName string, flags *CreateFlags, stdout, stderr io.Writer, jsonMode bool) error {
+	installer := mods.NewInstaller()
+
+	// Always ensure Fabric API is installed (Omakase principle)
+	if err := installer.EnsureFabricAPI(ctx, serverName); err != nil {
+		return fmt.Errorf("ensure Fabric API: %w", err)
+	}
+
+	// Build list of mods to install
+	modsToInstall := make([]string, 0)
+
+	// Add mods from --with-* flags
+	if flags.WithLithium {
+		modsToInstall = append(modsToInstall, "lithium")
+	}
+	if flags.WithVoiceChat {
+		modsToInstall = append(modsToInstall, "simple-voice-chat")
+	}
+	if flags.WithGeyser {
+		modsToInstall = append(modsToInstall, "geyser")
+	}
+	if flags.WithBlueMap {
+		modsToInstall = append(modsToInstall, "bluemap")
+	}
+
+	// Add mods from --mods flag
+	modsToInstall = append(modsToInstall, flags.Mods...)
+
+	// Install mods if any requested
+	if len(modsToInstall) > 0 {
+		if !jsonMode {
+			_, _ = fmt.Fprintf(stdout, "\nInstalling mods...\n")
+		}
+
+		installed, err := installer.InstallMods(ctx, serverName, modsToInstall)
+		if err != nil {
+			return fmt.Errorf("install mods: %w", err)
+		}
+
+		if !jsonMode && len(installed) > 0 {
+			_, _ = fmt.Fprintf(stdout, "Installed %d mod(s): %s\n", len(installed), strings.Join(installed, ", "))
+		}
+	}
+
+	return nil
 }
