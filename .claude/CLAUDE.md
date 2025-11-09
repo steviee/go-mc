@@ -533,6 +533,68 @@ make test-race
 
 ---
 
+## 🖥️ Test Environment
+
+### Integration Testing VM
+
+For integration testing and manual validation of the compiled binary, a dedicated test VM is available.
+
+**Connection Details:** See `TEST.md` (gitignored, local only)
+
+### VM Specifications
+
+- **OS:** Debian 13 (trixie)
+- **Access:** SSH with sudo/root privileges
+- **Purpose:**
+  - End-to-end testing of compiled binary
+  - System-level integration tests
+  - Podman container operations testing
+  - Destructive testing in isolated environment
+
+### Testing Protocol
+
+**Before committing code:**
+
+1. **Build binary:**
+   ```bash
+   make build
+   ```
+
+2. **Transfer to test VM:**
+   ```bash
+   scp build/go-mc mc@192.168.122.129:~/
+   ```
+
+3. **Run integration tests on VM:**
+   ```bash
+   ssh mc@192.168.122.129
+
+   # First-time setup (if not done)
+   sudo ./go-mc system setup
+
+   # Test critical workflows from README.md
+   ./go-mc servers create test-server
+   ./go-mc servers start test-server
+
+   # Wait for server to fully initialize (Minecraft takes ~30-60s to start)
+   sleep 60
+
+   ./go-mc servers top  # Verify in TUI (press 'q' to exit)
+   ./go-mc servers stop test-server
+   ./go-mc servers rm test-server --force --volumes
+   ```
+
+4. **Verify functionality matches README.md examples**
+
+5. **Clean up test artifacts:**
+   ```bash
+   ./go-mc system cleanup --all --force
+   ```
+
+**Critical Rule:** ALWAYS verify the binary works as documented in README.md before committing.
+
+---
+
 ## 🔀 Git Workflow
 
 ### CRITICAL RULE: Always Use Feature Branches

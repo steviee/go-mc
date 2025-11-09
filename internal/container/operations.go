@@ -323,8 +323,19 @@ func (c *client) StopContainer(ctx context.Context, containerID string, timeout 
 		"id", containerID,
 		"timeout", timeout)
 
+	// Calculate API timeout: container shutdown timeout + overhead buffer
+	// This ensures the HTTP request doesn't timeout before the container finishes stopping
+	apiTimeout := c.timeout
+	if timeout != nil {
+		// API timeout = container shutdown timeout + 15s buffer for API overhead
+		apiTimeout = *timeout + 15*time.Second
+		slog.Debug("adjusted API timeout for container shutdown",
+			"container_timeout", *timeout,
+			"api_timeout", apiTimeout)
+	}
+
 	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
-	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, apiTimeout)
 	defer cancel()
 
 	opts := new(containers.StopOptions)
@@ -357,8 +368,19 @@ func (c *client) RestartContainer(ctx context.Context, containerID string, timeo
 		"id", containerID,
 		"timeout", timeout)
 
+	// Calculate API timeout: container shutdown timeout + overhead buffer
+	// Restart includes stop + start, so we need extra time
+	apiTimeout := c.timeout
+	if timeout != nil {
+		// API timeout = container shutdown timeout + 20s buffer (stop + start overhead)
+		apiTimeout = *timeout + 20*time.Second
+		slog.Debug("adjusted API timeout for container restart",
+			"container_timeout", *timeout,
+			"api_timeout", apiTimeout)
+	}
+
 	// Use c.conn as base context (contains Podman client from bindings.NewConnection)
-	timeoutCtx, cancel := context.WithTimeout(c.conn, c.timeout)
+	timeoutCtx, cancel := context.WithTimeout(c.conn, apiTimeout)
 	defer cancel()
 
 	opts := new(containers.RestartOptions)
