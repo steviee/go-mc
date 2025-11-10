@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -317,7 +318,9 @@ func (s *Service) extractTarGz(ctx context.Context, archivePath, destDir string)
 		target := filepath.Join(destDir, header.Name)
 
 		// Ensure target is within destDir (security: prevent path traversal)
-		if !filepath.HasPrefix(filepath.Clean(target), filepath.Clean(destDir)) {
+		cleanTarget := filepath.Clean(target)
+		cleanDestDir := filepath.Clean(destDir) + string(filepath.Separator)
+		if !strings.HasPrefix(cleanTarget+string(filepath.Separator), cleanDestDir) {
 			return fmt.Errorf("invalid file path in archive: %s", header.Name)
 		}
 
