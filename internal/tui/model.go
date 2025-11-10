@@ -24,6 +24,38 @@ type ModInfo struct {
 	Version string
 }
 
+// MetricsHistory holds historical metrics for sparkline graphs
+type MetricsHistory struct {
+	CPUHistory    []float64 // Last N CPU percentage values
+	MemoryHistory []float64 // Last N memory percentage values
+	MaxDataPoints int       // Maximum number of data points to keep
+}
+
+// NewMetricsHistory creates a new metrics history with the specified capacity
+func NewMetricsHistory(maxPoints int) *MetricsHistory {
+	return &MetricsHistory{
+		CPUHistory:    make([]float64, 0, maxPoints),
+		MemoryHistory: make([]float64, 0, maxPoints),
+		MaxDataPoints: maxPoints,
+	}
+}
+
+// AddCPU adds a CPU usage data point
+func (m *MetricsHistory) AddCPU(value float64) {
+	m.CPUHistory = append(m.CPUHistory, value)
+	if len(m.CPUHistory) > m.MaxDataPoints {
+		m.CPUHistory = m.CPUHistory[1:]
+	}
+}
+
+// AddMemory adds a memory usage data point
+func (m *MetricsHistory) AddMemory(value float64) {
+	m.MemoryHistory = append(m.MemoryHistory, value)
+	if len(m.MemoryHistory) > m.MaxDataPoints {
+		m.MemoryHistory = m.MemoryHistory[1:]
+	}
+}
+
 // ServerInfo represents a server in the TUI
 type ServerInfo struct {
 	Name        string
@@ -42,6 +74,8 @@ type ServerInfo struct {
 	MemoryUsedBytes  int64   // Actual memory used in bytes
 	MemoryLimitBytes int64   // Memory limit in bytes
 	MemoryPercent    float64 // Memory usage percentage (0-100)
+	// Historical metrics for graphs
+	Metrics *MetricsHistory // Historical CPU/Memory metrics
 	// Player information (for future use)
 	PlayerCount int // Current player count
 	PlayerMax   int // Maximum players
@@ -62,6 +96,8 @@ type Model struct {
 	height          int
 	containerClient container.Client
 	quitting        bool
+	// Metrics history map (keyed by server name)
+	metricsHistory map[string]*MetricsHistory
 }
 
 // NewModel creates a new TUI model
@@ -72,6 +108,7 @@ func NewModel(client container.Client) *Model {
 		lastUpdate:      time.Now(),
 		loading:         true,
 		containerClient: client,
+		metricsHistory:  make(map[string]*MetricsHistory),
 	}
 }
 

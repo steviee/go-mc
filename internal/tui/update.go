@@ -40,6 +40,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, clearErrorCmd()
 		}
 
+		// Update servers and their metrics history
+		for i := range msg.servers {
+			serverName := msg.servers[i].Name
+
+			// Initialize metrics history if not exists
+			if m.metricsHistory[serverName] == nil {
+				m.metricsHistory[serverName] = NewMetricsHistory(30) // Keep last 30 data points
+			}
+
+			// Add current metrics to history
+			if msg.servers[i].Status == "running" {
+				m.metricsHistory[serverName].AddCPU(msg.servers[i].CPUPercent)
+				m.metricsHistory[serverName].AddMemory(msg.servers[i].MemoryPercent)
+			}
+
+			// Attach metrics history to server info
+			msg.servers[i].Metrics = m.metricsHistory[serverName]
+		}
+
 		m.servers = msg.servers
 		m.lastUpdate = time.Now()
 
