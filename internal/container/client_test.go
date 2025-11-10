@@ -158,12 +158,20 @@ func TestNewClient_InvalidRuntime(t *testing.T) {
 
 func TestNewClient_NilConfig(t *testing.T) {
 	// This test verifies that NewClient uses default config when nil is passed
-	// We expect it to try auto-detection and fail (since we don't have a real daemon)
+	// and doesn't panic. It may succeed (if a daemon is running) or fail (if not).
 	ctx := context.Background()
 
-	_, err := NewClient(ctx, nil)
-	// Should fail because no daemon is running, but should not panic
-	assert.Error(t, err)
+	client, err := NewClient(ctx, nil)
+	// Either succeeds (daemon running) or fails (no daemon) - both are valid
+	// The important part is that it doesn't panic with nil config
+	if err == nil {
+		// Success case - daemon is running
+		assert.NotNil(t, client)
+		_ = client.Close()
+	} else {
+		// Failure case - no daemon running (expected in CI without daemon)
+		assert.Error(t, err)
+	}
 }
 
 func TestNewClient_ExplicitSocket_NotFound(t *testing.T) {

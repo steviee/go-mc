@@ -66,7 +66,7 @@ func TestOutputOperationResult(t *testing.T) {
 				Skipped: []string{},
 			},
 			jsonMode: true,
-			wantErr:  false,
+			wantErr:  true, // Changed: Should return error like human mode for consistency
 			contains: []string{"error"},
 		},
 	}

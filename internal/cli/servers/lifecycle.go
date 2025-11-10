@@ -96,7 +96,15 @@ func outputOperationResult(stdout io.Writer, operation string, result *Operation
 	jsonMode := isJSONMode()
 
 	if jsonMode {
-		return outputOperationJSON(stdout, operation, result)
+		// Output JSON first
+		if err := outputOperationJSON(stdout, operation, result); err != nil {
+			return err
+		}
+		// Then return error if any operations failed (consistent with human output)
+		if result.HasFailures() {
+			return fmt.Errorf("%d server(s) failed", len(result.Failed))
+		}
+		return nil
 	}
 
 	return outputOperationHuman(stdout, operation, result)
