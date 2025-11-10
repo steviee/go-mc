@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
@@ -390,6 +391,110 @@ func TestShowDryRunUpdate(t *testing.T) {
 			assert.NotPanics(t, func() {
 				// This would call showDryRunUpdate in real usage
 			})
+		})
+	}
+}
+
+func TestOutputUpdateSummary(t *testing.T) {
+	summary := &UpdateSummary{
+		ServerName:   "test-server",
+		BackupID:     "backup-123",
+		MinecraftOld: "1.20.1",
+		MinecraftNew: "1.20.4",
+		FabricOld:    "0.14.21",
+		FabricNew:    "0.15.0",
+		ModsUpdated: []ModUpdateResult{
+			{
+				Slug:       "fabric-api",
+				Status:     "success",
+				OldVersion: "0.90.0",
+				NewVersion: "0.92.0",
+			},
+		},
+		ModsSkipped: []ModUpdateResult{
+			{
+				Slug:   "sodium",
+				Status: "skipped",
+				Reason: "up-to-date",
+			},
+		},
+		Restarted: true,
+	}
+
+	tests := []struct {
+		name     string
+		jsonMode bool
+		wantJSON bool
+	}{
+		{
+			name:     "human readable output",
+			jsonMode: false,
+			wantJSON: false,
+		},
+		{
+			name:     "JSON output",
+			jsonMode: true,
+			wantJSON: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.jsonMode {
+				_ = os.Setenv("GOMC_JSON", "true")
+				defer func() { _ = os.Unsetenv("GOMC_JSON") }()
+			}
+
+			var buf bytes.Buffer
+			err := outputUpdateSummary(&buf, summary, tt.jsonMode)
+
+			require.NoError(t, err)
+			output := buf.String()
+			assert.NotEmpty(t, output)
+
+			if tt.wantJSON {
+				assert.Contains(t, output, "test-server")
+				assert.Contains(t, output, "{")
+			} else {
+				assert.Contains(t, output, "test-server")
+			}
+		})
+	}
+}
+
+func TestOutputUpdateError(t *testing.T) {
+	testErr := assert.AnError
+
+	tests := []struct {
+		name     string
+		jsonMode bool
+		wantJSON bool
+	}{
+		{
+			name:     "human readable error",
+			jsonMode: false,
+			wantJSON: false,
+		},
+		{
+			name:     "JSON error",
+			jsonMode: true,
+			wantJSON: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			returnedErr := outputUpdateError(&buf, tt.jsonMode, testErr)
+
+			// Should return the same error
+			assert.Equal(t, testErr, returnedErr)
+
+			output := buf.String()
+			if tt.wantJSON {
+				assert.Contains(t, output, "error")
+				assert.Contains(t, output, "{")
+			}
 		})
 	}
 }
