@@ -43,6 +43,8 @@ You can also view server status, logs, and configuration.`,
 	cmd.AddCommand(NewRmCommand())
 	cmd.AddCommand(NewLogsCommand())
 	cmd.AddCommand(NewTopCommand())
+	cmd.AddCommand(NewBackupCommand())
+	cmd.AddCommand(NewRestoreCommand())
 
 	// Future subcommands
 	// cmd.AddCommand(NewStatusCommand())
